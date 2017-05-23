@@ -1,0 +1,372 @@
+﻿using System;
+using Gtk;
+using Cairo;
+using System.Collections.Generic;
+using UI = Gtk.Builder.ObjectAttribute;
+using System.Threading;
+
+namespace Booru {
+
+	public partial class ImagesResultWidget : Gtk.VBox
+	{
+		[UI] Gtk.Box ImageViewBox;
+		[UI] Gtk.TreeView ImageThumbView;
+		[UI] Gtk.Button ButtonSlideshow;
+		[UI] Gtk.Spinner Spinner;
+		[UI] Gtk.ToggleButton ShowTagsToggle;
+		[UI] Gtk.Entry TagsEntry;
+		[UI] Gtk.Label ResultCountLabel;
+		[UI] Gtk.ProgressBar ThumbProgress;
+
+		private readonly Database db;
+
+		private Thread findThread, loadThumbThread;
+
+		private ListStore store;
+
+		private BooruImage activeImage;
+		private ImageViewWidget imageView;
+		private TagsOverlay tagsOverlay;
+
+		private uint slideShowTimer = 0;
+
+		public static ImagesResultWidget Create (Database db, string searchString)
+		{
+			Builder builder = new Builder (null, "Booru.interfaces.ImagesResultWidget.glade", null);
+			return new ImagesResultWidget (builder, builder.GetObject ("ImagesResultWidget").Handle, db, searchString);
+		}
+
+		protected ImagesResultWidget (Builder builder, IntPtr handle, Database db, string searchString) : base (handle)
+		{
+			builder.Autoconnect (this);
+
+			this.db = db;
+
+			MainClass.WillQuit += Abort;
+			this.Removed += (o, args) => {Abort();};
+
+			this.imageView = new ImageViewWidget ();
+			this.ImageViewBox.PackStart(this.imageView, true, true, 0);
+
+			this.tagsOverlay = new TagsOverlay (this.imageView);
+
+			var completion = new Gtk.EntryCompletion ();
+			completion.Model = db.CompletionStore;
+			completion.TextColumn = 0;
+			completion.MinimumKeyLength = 3;
+			this.TagsEntry.Completion = completion;
+
+			this.imageView.Events |= Gdk.EventMask.ScrollMask;
+			this.imageView.ScrollEvent += (o, args) => {
+				this.Advance(args.Event.Direction == Gdk.ScrollDirection.Down);
+			};
+				
+			CellRenderer thumbRenderer = new CellRendererPixbuf ();
+			TreeViewColumn column = new TreeViewColumn ("Thumbnail", thumbRenderer);
+			column.AddAttribute (thumbRenderer, "pixbuf", 1);
+			column.Resizable = true;
+			this.ImageThumbView.AppendColumn (column);
+
+			this.store = new ListStore(typeof (string), typeof (Gdk.Pixbuf), typeof(BooruImage), typeof(float));
+			this.ImageThumbView.Model = store;
+			this.ImageThumbView.TooltipColumn = 0;
+
+			this.Spinner.Active = true;
+
+			int resultCount = 0;
+
+			var placehoderThumb = new Gdk.Pixbuf (null, "Booru.Pixbufs.nopreview.png");
+			placehoderThumb = placehoderThumb.ScaleSimple (128, 128, Gdk.InterpType.Hyper);
+
+			var findStart = new ThreadStart (() => {
+				var reader = this.db.QueryImagesWithTags (searchString.Split (" ".ToCharArray (), StringSplitOptions.RemoveEmptyEntries));
+				var readerColumns = new Dictionary<string, int> ();
+				for (int i = 0; i < reader.FieldCount; i++)
+					readerColumns [reader.GetName (i)] = i;
+
+				bool updatingCount = false;
+				while (reader.Read ()) {
+					string path = reader.GetString (readerColumns ["path"]);
+					object md5obj = reader.GetValue (readerColumns ["md5sum"]);
+					float elo = reader.GetFloat (readerColumns ["elo"]);
+					int votes = reader.GetInt32 (readerColumns ["votes"]);
+					string type = reader.GetString(readerColumns["type"]);
+					byte[] md5blob = (byte[])md5obj;
+
+					if (!System.IO.File.Exists(path)) {
+						this.db.RemoveImagePath(path);
+						continue;
+					}
+
+					var data = new BooruImageData (MD5Helper.BlobToMD5 (md5blob), path, elo, votes, type);
+					var image = new BooruImage (data, this.db);
+
+					string tagsString = data.Path+"\n"+string.Join(" ", image.Tags);
+					lock(this.store) {
+						this.store.AppendValues (tagsString, placehoderThumb, image, data.ELO);
+					}
+					resultCount ++;
+
+					if (!updatingCount) {
+						updatingCount = true;
+						Gtk.Application.Invoke((s,a)=>{
+							this.ResultCountLabel.Text = resultCount.ToString();
+							updatingCount = false;
+						});
+					}
+				}
+					
+				Gtk.Application.Invoke((s,a)=>{
+					this.Spinner.Active = false;
+				});
+
+				this.findThread = null;
+			});
+
+			this.findThread = new Thread (findStart);
+			this.findThread.Start ();
+
+			var loadStart = new ThreadStart (() => {
+				int thumbCount = 0;
+				bool lastIteration = false;
+				do {
+					Gtk.TreeIter iter;
+
+					Thread.Sleep (1000);
+
+					var store = this.store;
+
+					if (!store.GetIterFirst (out iter)) {
+						continue;
+					}
+
+					do {
+						BooruImage image;
+						Gdk.Pixbuf thumb;
+						TreePath path;
+						lock(store) {
+							image = store.GetValue(iter, 2) as BooruImage;
+							thumb = store.GetValue(iter, 1) as Gdk.Pixbuf;
+							path = store.GetPath(iter);
+						}
+						if (image != null && (thumb == null || thumb == placehoderThumb)) {
+							Gdk.Pixbuf previewImage = image.GetPreviewImage();
+							lock(store) {
+								store.GetIter(out iter, path);
+								store.SetValue(iter, 1, previewImage);
+							}
+							thumbCount++;
+						}
+
+						bool updatingCount = false;
+						if (!updatingCount) {
+							updatingCount = true;
+							Gtk.Application.Invoke((s,a)=>{
+								float fraction = (float)thumbCount / (float)resultCount;
+								this.ThumbProgress.Fraction = fraction;
+								updatingCount = false;
+							});
+						}
+					} while(store.IterNext(ref iter));
+
+					if (this.findThread == null && !lastIteration) {
+						lastIteration = true;
+					} else if (lastIteration) {
+						break;
+					}
+				} while(true);					
+			});
+
+			this.loadThumbThread = new Thread (loadStart);
+			this.loadThumbThread.Start ();
+		}
+
+		private void Abort()
+		{
+			if (this.findThread!=null)
+				this.findThread.Abort();
+			if (this.loadThumbThread != null)
+				this.loadThumbThread.Abort ();
+
+			if (this.slideShowTimer != 0) {
+				GLib.Timeout.Remove (this.slideShowTimer);
+				this.slideShowTimer = 0;
+			}
+		}
+
+		protected void Advance(bool forward)
+		{
+			TreePath path;
+			TreeViewColumn column;
+			this.ImageThumbView.GetCursor (out path, out column);
+
+			TreeIter iter;
+			this.store.GetIter (out iter, path);
+
+			if (forward) {
+				if (!this.store.IterNext(ref iter)) {
+					this.store.GetIterFirst(out iter);
+				}
+				path = this.store.GetPath(iter);
+			} else {
+				this.store.IterPrevious(ref iter);
+				path = this.store.GetPath(iter);
+			}
+
+			this.ImageThumbView.SetCursor(path, null, false);
+			this.ImageThumbView.Selection.SelectPath(path);
+			this.SelectImage (path);
+		}
+
+		protected void on_ButtonSlideshow_clicked(object sender, EventArgs args)
+		{
+			if (slideShowTimer == 0) {
+				ButtonSlideshow.Label = "Stop Slideshow";
+				slideShowTimer = GLib.Timeout.Add (5000, () => {
+					this.Advance(true);
+					return true;
+				});
+			} else {
+				ButtonSlideshow.Label = "Start Slideshow";
+				GLib.Timeout.Remove (this.slideShowTimer);
+				this.slideShowTimer = 0;
+			}
+		}
+			
+		protected void on_FullScreenButton_clicked(object sender, EventArgs args)
+		{
+			if (this.activeImage != null)
+				this.activeImage.ViewExternal ();
+		}
+
+		private void SelectImage(TreePath Path)
+		{
+			lock (this.store) {
+				TreeIter iter;
+				if (!this.store.GetIter (out iter, Path))
+					return;
+
+				if (this.activeImage != null)
+					this.activeImage.Dispose ();
+
+				BooruImage image = (BooruImage)this.store.GetValue (iter, 2);
+				this.imageView.Anim = image.Anim;
+				this.activeImage = image;
+				this.tagsOverlay.image = image;
+				this.TagsEntry.Text = "";
+			}
+		}
+
+<<<<<<< 67b721959f56780d4810c52c0410a0fcf5746a33
+				SendImage ();
+=======
+		protected void on_ImageThumbView_row_activated(object obj, Gtk.RowActivatedArgs args)
+		{
+			this.SelectImage (args.Path);
+		}
+
+		protected void on_ImageThumbView_move_cursor(object obj, Gtk.MoveCursorArgs args)
+		{
+			lock (this.store) {
+				TreePath path;
+				TreeViewColumn column;
+				this.ImageThumbView.GetCursor (out path, out column);
+				this.SelectImage (path);
+>>>>>>> added maintenance tools
+			}
+		}
+
+		protected void on_ImageThumbView_key_press_event(object sender, Gtk.KeyPressEventArgs args)
+		{
+		}
+
+		protected void on_ShowTagsToggle_toggled(object sender, EventArgs args)
+		{
+			this.tagsOverlay.Active = ShowTagsToggle.Active;
+			this.TagsEntry.Visible = ShowTagsToggle.Active;
+		}
+
+		protected void on_TagsEntry_activate(object sender, EventArgs args)
+		{
+			if (this.activeImage == null)
+				return;
+
+			var enteredTags = this.TagsEntry.Text.Split (" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+			if (enteredTags.Length == 0) {
+				this.Advance (true);
+				return;
+			}
+				
+			foreach (string enteredTag in enteredTags) {
+				if (enteredTag.StartsWith ("-")) {
+					var tag = this.db.GetCanonicalTag (enteredTag.Substring (1));
+					this.activeImage.RemoveTag (tag);
+				} else {
+					var tag = this.db.GetCanonicalTag (enteredTag);
+					int tagId = this.db.GetTagId (tag);
+					if (tagId == -1) {
+						var resolve = ResolveTagWindow.Create (tag, this.db);
+						resolve.Parent = this;
+						if (resolve.Run () == (int)Gtk.ResponseType.Ok) {
+							this.activeImage.db.GetOrCreateTagId (resolve.Tag);
+							this.activeImage.AddTag (resolve.Tag);
+						}
+						resolve.Hide ();
+					} else {
+						this.activeImage.AddTag (tag);
+					}
+				}
+			}
+			this.TagsEntry.Text = "";
+			this.imageView.QueueDraw ();
+		}
+
+		Thread sendThread;
+		System.Net.Sockets.Socket socket;
+
+		private void SendImage()
+		{
+			if (this.activeImage.ImageType != BooruImageType.Image)
+				return;
+
+			if (sendThread != null) {
+				sendThread.Abort ();
+				if (this.socket != null) {
+					this.socket.Close ();
+					this.socket.Dispose ();
+				}
+			}
+			sendThread = new Thread(() => {
+				try {
+					this.socket = new System.Net.Sockets.Socket( System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp );
+					socket.LingerState = new System.Net.Sockets.LingerOption(true, 3);
+					socket.Connect("192.168.192.38", 9966); // FIXME: add pairing
+
+					var reader = System.IO.File.OpenRead(this.activeImage.Data.Path);
+					int length = (int)reader.Length;
+					byte[] dataBytes = new byte[length + 4];
+					dataBytes[0] = (byte)((length)&0xff);
+					dataBytes[1] = (byte)((length >> 8)&0xff);
+					dataBytes[2] = (byte)((length >> 16)&0xff);
+					dataBytes[3] = (byte)((length >> 24)&0xff);
+
+					int offset = 0;
+					while(offset<length) {
+						offset += reader.Read(dataBytes, offset + 4, length - offset);
+					}
+
+					offset = 0;
+					while(offset<length+4) {
+						offset += socket.Send(dataBytes, offset, length+4 - offset, System.Net.Sockets.SocketFlags.None);
+					}
+				} catch (Exception ex) {
+					Console.WriteLine("Exception caught: "+ex.Message);
+				}
+			});
+			sendThread.Start ();
+		}
+
+	}
+
+}

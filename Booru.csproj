@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Booru</RootNamespace>
+    <AssemblyName>booru3</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <ApplicationIcon>Pixbufs\icon.png</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="gdk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gdk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gio-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>glib-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="cairo-sharp, Version=1.10.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="Mono.Data.Sqlite" />
+    <Reference Include="System.Data" />
+    <Reference Include="ICSharpCode.SharpZipLib" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Mono.Posix" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sources\Program.cs" />
+    <Compile Include="Sources\Database\Database.cs" />
+    <Compile Include="Sources\Database\BooruImageType.cs" />
+    <Compile Include="Sources\Database\RandomImageLoader.cs" />
+    <Compile Include="Sources\Images\PixbufLoader.cs" />
+    <Compile Include="Sources\Widgets\ImageViewWidget.cs" />
+    <Compile Include="Sources\Network\SocksHttpWebResponse.cs" />
+    <Compile Include="Sources\Network\SocksHttpWebRequest.cs" />
+    <Compile Include="Sources\Network\ProxySocket\AuthMethod.cs" />
+    <Compile Include="Sources\Network\ProxySocket\AuthNone.cs" />
+    <Compile Include="Sources\Network\ProxySocket\AuthUserPass.cs" />
+    <Compile Include="Sources\Network\ProxySocket\IAsyncProxyResult.cs" />
+    <Compile Include="Sources\Network\ProxySocket\ProxyException.cs" />
+    <Compile Include="Sources\Network\ProxySocket\ProxySocket.cs" />
+    <Compile Include="Sources\Network\ProxySocket\Socks4Handler.cs" />
+    <Compile Include="Sources\Network\ProxySocket\Socks5Handler.cs" />
+    <Compile Include="Sources\Network\ProxySocket\SocksHandler.cs" />
+    <Compile Include="Sources\Network\SocksWebClient.cs" />
+    <Compile Include="Sources\Windows\ResolveTagWindow.cs" />
+    <Compile Include="Sources\Database\Queries\DatabaseQuery.cs" />
+    <Compile Include="Sources\Util\MD5Helper.cs" />
+    <Compile Include="Sources\Util\StringHelper.cs" />
+    <Compile Include="Sources\Windows\MainWindow.cs" />
+    <Compile Include="Sources\Widgets\ImagesResultWidget.cs" />
+    <Compile Include="Sources\Widgets\TagsOverlay.cs" />
+    <Compile Include="Sources\Database\Configuration.cs" />
+    <Compile Include="Sources\EventCenter.cs" />
+    <Compile Include="Sources\BooruSettings.cs" />
+    <Compile Include="Sources\Database\ImageImporter.cs" />
+    <Compile Include="Sources\Widgets\Tabs\ConfigTab.cs" />
+    <Compile Include="Sources\Widgets\Tabs\ImagesTab.cs" />
+    <Compile Include="Sources\Widgets\Tabs\ImportTab.cs" />
+    <Compile Include="Sources\Widgets\Tabs\MainTab.cs" />
+    <Compile Include="Sources\Widgets\Tabs\TagListTab.cs" />
+    <Compile Include="Sources\Widgets\Tabs\VoteTab.cs" />
+    <Compile Include="Sources\BooruLog.cs" />
+    <Compile Include="Sources\Widgets\ImageVoteWidget.cs" />
+    <Compile Include="Sources\Widgets\TabLabels\BigTabLabel.cs" />
+    <Compile Include="Sources\Widgets\TabLabels\ClosableTabLabel.cs" />
+    <Compile Include="Sources\Widgets\ConfigValueWidgets\ConfigValueBoolWidget.cs" />
+    <Compile Include="Sources\Widgets\ConfigValueWidgets\ConfigValueFolderWidget.cs" />
+    <Compile Include="Sources\Widgets\ConfigValueWidgets\ConfigValueStringWidget.cs" />
+    <Compile Include="Sources\Images\ThumbStore.cs" />
+    <Compile Include="Sources\Images\ImageExporter.cs" />
+    <Compile Include="Sources\Resources.cs" />
+    <Compile Include="Sources\Database\Queries\DatabaseReader.cs" />
+    <Compile Include="Sources\Database\Queries\DatabaseReadable.cs" />
+    <Compile Include="Sources\Database\Queries\DatabaseCursor.cs" />
+    <Compile Include="Sources\Database\Queries\Config\Get.cs" />
+    <Compile Include="Sources\Database\Queries\Config\Set.cs" />
+    <Compile Include="Sources\Database\Queries\Files\Remove.cs" />
+    <Compile Include="Sources\Database\Queries\Files\Add.cs" />
+    <Compile Include="Sources\Database\Queries\Files\GetAll.cs" />
+    <Compile Include="Sources\Database\Queries\Files\GetForMD5.cs" />
+    <Compile Include="Sources\Database\Queries\Images\Remove.cs" />
+    <Compile Include="Sources\Database\Queries\Images\Add.cs" />
+    <Compile Include="Sources\Database\Queries\Images\Exists.cs" />
+    <Compile Include="Sources\Database\Queries\Images\NextVoteImages.cs" />
+    <Compile Include="Sources\Database\Queries\Images\SetType.cs" />
+    <Compile Include="Sources\Database\Queries\Images\UpdateElo.cs" />
+    <Compile Include="Sources\Database\Queries\ImageTags\Add.cs" />
+    <Compile Include="Sources\Database\Queries\ImageTags\Get.cs" />
+    <Compile Include="Sources\Database\Queries\ImageTags\Remove.cs" />
+    <Compile Include="Sources\Database\Queries\ImageTags\Replace.cs" />
+    <Compile Include="Sources\Database\Queries\TagImplications\Add.cs" />
+    <Compile Include="Sources\Database\Queries\TagImplications\Get.cs" />
+    <Compile Include="Sources\Database\Queries\TagImplications\Remove.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\UpdateScore.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\Add.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\Match.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\GetID.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\GetAll.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\SetType.cs" />
+    <Compile Include="Sources\Database\Entities\ImageDetails.cs" />
+    <Compile Include="Sources\Images\Image.cs" />
+    <Compile Include="Sources\Database\Entities\TagDetails.cs" />
+    <Compile Include="Sources\Images\ImageFinder.cs" />
+    <Compile Include="Sources\Database\ImageReader.cs" />
+    <Compile Include="Sources\Database\Queries\Images\FindImages.cs" />
+    <Compile Include="Sources\Database\Queries\Images\SetSize.cs" />
+    <Compile Include="Sources\Util\Point2D.cs" />
+    <Compile Include="Sources\Util\Rectangle2D.cs" />
+    <Compile Include="Sources\Widgets\SimilarTagWidget.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\Get.cs" />
+    <Compile Include="Sources\Database\Entities\TagImplicationDetails.cs" />
+    <Compile Include="Sources\Database\Queries\Images\Get.cs" />
+    <Compile Include="Sources\Widgets\ConfigValueWidgets\ConfigValueIntWidget.cs" />
+    <Compile Include="Sources\Database\Queries\Images\UpdateAdded.cs" />
+    <Compile Include="Sources\Database\Queries\Images\UpdateUpdated.cs" />
+    <Compile Include="Sources\Threads\TaskRunner.cs" />
+    <Compile Include="Sources\Widgets\LoadableWidget.cs" />
+    <Compile Include="Sources\Util\CairoHelper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\SQL\schema.sql">
+      <LastGenOutput>schema.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Styles\screen.css" />
+    <EmbeddedResource Include="Resources\GUI\BigTabLabel.glade" />
+    <EmbeddedResource Include="Resources\GUI\ClosableTabLabel.glade" />
+    <EmbeddedResource Include="Resources\GUI\ImagesResultWidget.glade" />
+    <EmbeddedResource Include="Resources\GUI\MainWindow.glade" />
+    <EmbeddedResource Include="Resources\GUI\ResolveTagsWindow.glade" />
+    <EmbeddedResource Include="Resources\GUI\Tabs\ConfigTab.glade">
+      <LogicalName>Booru.Resources.GUI.ConfigTab.glade</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\GUI\Tabs\ImagesTab.glade">
+      <LogicalName>Booru.Resources.GUI.ImagesTab.glade</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\GUI\Tabs\ImportTab.glade">
+      <LogicalName>Booru.Resources.GUI.ImportTab.glade</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\GUI\Tabs\MainTab.glade">
+      <LogicalName>Booru.Resources.GUI.MainTab.glade</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\GUI\Tabs\TagListTab.glade">
+      <LogicalName>Booru.Resources.GUI.TagListTab.glade</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\GUI\PathSelectorWidget.glade" />
+    <EmbeddedResource Include="Resources\GUI\SimilarTagWidget.glade" />
+    <EmbeddedResource Include="Resources\Pixbufs\icon.png" />
+    <EmbeddedResource Include="Resources\Pixbufs\nopreview.png" />
+    <EmbeddedResource Include="Resources\SQL\upgrade_0.sql" />
+    <EmbeddedResource Include="Resources\GUI\Tabs\VoteTab.glade">
+      <LogicalName>Booru.Resources.GUI.VoteTab.glade</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\GUI\ImageVoteWidget.glade" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Sources\" />
+    <Folder Include="Sources\Database\" />
+    <Folder Include="Sources\Images\" />
+    <Folder Include="Sources\Network\" />
+    <Folder Include="Sources\Network\ProxySocket\" />
+    <Folder Include="Sources\Windows\" />
+    <Folder Include="Sources\Database\Queries\" />
+    <Folder Include="Sources\Util\" />
+    <Folder Include="Sources\Widgets\Tabs\" />
+    <Folder Include="Resources\" />
+    <Folder Include="Resources\SQL\" />
+    <Folder Include="Resources\Styles\" />
+    <Folder Include="Resources\GUI\" />
+    <Folder Include="Sources\Widgets\TabLabels\" />
+    <Folder Include="Sources\Widgets\ConfigValueWidgets\" />
+    <Folder Include="Resources\Pixbufs\" />
+    <Folder Include="Sources\Database\Queries\Images\" />
+    <Folder Include="Sources\Database\Queries\Files\" />
+    <Folder Include="Sources\Database\Queries\ImageTags\" />
+    <Folder Include="Sources\Database\Queries\TagImplications\" />
+    <Folder Include="Sources\Database\Queries\Tags\" />
+    <Folder Include="Sources\Database\Queries\Config\" />
+    <Folder Include="Sources\Database\Entities\" />
+    <Folder Include="Sources\Threads\" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,742 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
+<interface>
+  <requires lib="gtk+" version="3.12"/>
+  <object class="GtkScrolledWindow" id="ConfigTab">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <child>
+      <object class="GtkViewport" id="viewport1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="shadow_type">none</property>
+        <child>
+          <object class="GtkGrid" id="grid2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">32</property>
+            <property name="margin_right">32</property>
+            <property name="margin_top">32</property>
+            <property name="margin_bottom">32</property>
+            <property name="row_spacing">4</property>
+            <property name="column_spacing">4</property>
+            <child>
+              <object class="GtkLabel" id="label7">
+                <property name="name">path:vidthumbs.path</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Directory from which to load surrogate images if a file can't be loaded as an image. Files must be named &lt;i&gt;MD5&lt;/i&gt;.png or &lt;i&gt;MD5&lt;/i&gt;.jpg, with &lt;i&gt;MD5&lt;/i&gt; being the md5sum of the file to load.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Video Preview Image Path</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label14">
+                <property name="name">bool:thumbs.enable</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Enable caching thumbnails on disk. Remember to specify a valid path.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Enable Thumbnail Caching</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label15">
+                <property name="name">path:thumbs.path</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;DIrectory in which to cache the thumbnails.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Thumbnail Cache Path</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">32</property>
+                <property name="label" translatable="yes">Gelbooru Support</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">10</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="name">bool:gelbooru.enable</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Enable support for asking the &lt;i&gt;Gelbooru&lt;/i&gt; server about image tags during image import.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Enable Gelbooru Support</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">13</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="name">string:gelbooru.user</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;User ID to use when using the &lt;i&gt;Gelbooru&lt;/i&gt; API. You can find this settings in your cookies after loggin in to the &lt;i&gt;Gelbooru&lt;/i&gt; website.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Gelbooru API User ID</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">14</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label3">
+                <property name="name">string:gelbooru.pass</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Password hash to use when using the &lt;i&gt;Gelbooru&lt;/i&gt; API. You can find this settings in your cookies after loggin in to the &lt;i&gt;Gelbooru&lt;/i&gt; website.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Gelbooru API Password Hash</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">15</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label5">
+                <property name="name">string:gelbooru.url</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;API URL to use for requesting information about an image. &lt;tt&gt;{0}&lt;/tt&gt; will be replaced by the image's md5sum.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Gelbooru API URL</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">16</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label13">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">32</property>
+                <property name="label" translatable="yes">Danbooru Support</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">17</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label9">
+                <property name="name">bool:danbooru.enable</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Enable support for asking the &lt;i&gt;Danbooru&lt;/i&gt; server about image tags during image import.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Enable Danbooru Support</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">20</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label8">
+                <property name="name">string:danbooru.url</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;API URL to use for requesting information about an image. &lt;tt&gt;{0}&lt;/tt&gt; will be replaced by the image's md5sum.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Danbooru API URL</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">21</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label12">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">32</property>
+                <property name="label" translatable="yes">Network Settings</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">22</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label11">
+                <property name="name">bool:net.proxy.enable</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Connect to website using a proxy server.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Use Proxy Server</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">25</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label18">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">32</property>
+                <property name="label" translatable="yes">External Applications</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">27</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label19">
+                <property name="name">string:viewer.image</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Command to run for viewing images externally.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Image Viewer</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">30</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label20">
+                <property name="name">string:viewer.animation</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Command to run for viewing animations (animated gifs) externally.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Animation Viewer</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">31</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label21">
+                <property name="name">string:viewer.video</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Command to run for playing videos externally.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Video Player</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">32</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label22">
+                <property name="name">string:viewer.comix</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Command to run for opening comic books or other types of archives externally.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Comic reader</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">33</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label23">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">8</property>
+                <property name="label" translatable="yes">This program can connect to the danbooru website to gather information about images during import. These settings specify how to access danbooru.</property>
+                <property name="wrap">True</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">19</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label24">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">8</property>
+                <property name="label" translatable="yes">This program can connect to the gelbooru website to gather information about images during import. These settings specify how to access gelbooru.</property>
+                <property name="wrap">True</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">12</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label25">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">8</property>
+                <property name="label" translatable="yes">Misc. file paths to use.</property>
+                <property name="wrap">True</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label26">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">8</property>
+                <property name="label" translatable="yes">When accessing the above websites a proxy can be used. Slideshows can also be displayed on an external mobile device that runs the image viewer app. </property>
+                <property name="wrap">True</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">24</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label27">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">8</property>
+                <property name="label" translatable="yes">&lt;markup&gt;&lt;span&gt;These settings define what commands to run when viewing a file externally is requested. There is one command for each file type. &lt;i&gt;{0}&lt;/i&gt; will be replaced with the file name.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">29</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator" id="separator1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">16</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator" id="separator2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">16</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">11</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator" id="separator3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">16</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">18</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator" id="separator4">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">16</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">23</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator" id="separator5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">16</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">28</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label10">
+                <property name="name">string:net.proxy.url</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;URL of proxy server. eg. &lt;tt&gt;socks5h://localhost:9050&lt;/tt&gt; for using local tor server.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Proxy Server URL</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">26</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label16">
+                <property name="name">int:16:512:thumbs.size</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Thumbnail Size.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Thumbnail Size</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">General Settings</property>
+                <property name="xalign">0</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label28">
+                <property name="name">int:1:120000:slideshow.timeout</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Slideshow timeout in milliseconds.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Slideshow Timeout</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">7</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label29">
+                <property name="name">bool:deletemove.enable</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;If enabled, the delete button will actually move instead of deleting the image file. Note: It will still be removed from the database.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Move Instead of Delete</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">8</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label30">
+                <property name="name">path:deletemove.path</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;If "Move Instead of Delete" is enabled, move image files here.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Deleted Image Path</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">9</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
