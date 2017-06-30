@@ -23,7 +23,7 @@ namespace Ditrans
 
 		private ProxyTypes _proxyType;
 
-		private IDictionary<string, string> cookies;
+		private IDictionary<string, string> _cookies;
 
 		// darn MS for making everything internal (yeah, I'm talking about you, System.net.KnownHttpVerb)
 		static readonly StringCollection validHttpVerbs =
@@ -43,7 +43,7 @@ namespace Ditrans
 		{
 			_requestUri = requestUri;
 			_proxyType = proxyType;
-			this.cookies = cookies; 
+			_cookies = cookies; 
 		}
 
 		#endregion
@@ -193,10 +193,10 @@ namespace Ditrans
 				message.AppendFormat("Content-Length: {0}\r\n", ContentLength);
 			}
 
-			if (cookies != null && cookies.Count > 0) 
+			if (_cookies != null && _cookies.Count > 0) 
 			{
 				List<string> cookieStrings = new List<string> ();
-				foreach (var cookie in cookies) {
+				foreach (var cookie in _cookies) {
 					cookieStrings.Add (cookie.Key + "=" + cookie.Value);
 				}
 				message.AppendFormat("Cookie: "+string.Join (";", cookieStrings) + "\r\n");
@@ -219,30 +219,62 @@ namespace Ditrans
 
 			return message.ToString();
 		}
+			
+		private Socket CreateSocket()
+		{
+			if (_proxyType == ProxyTypes.None) {
+				return new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			}
+
+			var socket = new ProxySocket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			var proxyUri = Proxy.GetProxy(RequestUri);
+			var ipAddress = GetProxyIpAddress(proxyUri);
+			socket.ProxyEndPoint = new IPEndPoint(ipAddress, proxyUri.Port);
+			socket.ProxyType = _proxyType; // ProxyTypes.Socks5;
+
+			return socket;
+		}
+
+		private Stream OpenNetworkStream()
+		{
+			Socket socket = CreateSocket ();
+			if (RequestUri.Scheme == "http") {
+				int port = RequestUri.IsDefaultPort ? 80 : RequestUri.Port;
+				socket.Connect (RequestUri.Host, port);
+
+				return new NetworkStream (socket);
+			} else if (RequestUri.Scheme == "https") {
+				int port = RequestUri.IsDefaultPort ? 443 : RequestUri.Port;
+				socket.Connect (RequestUri.Host, port);
+
+				var stream = new NetworkStream (socket);
+				var sslStream = new System.Net.Security.SslStream (stream);
+
+				sslStream.AuthenticateAsClient (RequestUri.Host);
+
+				return sslStream;
+			} else {
+				throw new InvalidDataException("unknown uri scheme "+RequestUri.Scheme);
+			}
+		}
 
 		private SocksHttpWebResponse InternalGetResponse()
 		{
 			var response = new StringBuilder();
-			using (var _socksConnection =
-				new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+			// open connection
+			using (var _stream = OpenNetworkStream ()) 
 			{
-				var proxyUri = Proxy.GetProxy(RequestUri);
-				var ipAddress = GetProxyIpAddress(proxyUri);
-				_socksConnection.ProxyEndPoint = new IPEndPoint(ipAddress, proxyUri.Port);
-				_socksConnection.ProxyType = _proxyType; // ProxyTypes.Socks5;
-
-				// open connection
-				_socksConnection.Connect(RequestUri.Host, 80);
 				// send an HTTP request
-				_socksConnection.Send(Encoding.ASCII.GetBytes(RequestMessage));
+				var requestBytes = Encoding.ASCII.GetBytes (RequestMessage);
+				_stream.Write (requestBytes, 0, requestBytes.Length);
+
 				// read the HTTP reply
 				var buffer = new byte[1024];
 
-				var bytesReceived = _socksConnection.Receive(buffer);
-				while (bytesReceived > 0)
-				{
-					response.Append(Encoding.ASCII.GetString(buffer, 0, bytesReceived));
-					bytesReceived = _socksConnection.Receive(buffer);
+				var bytesReceived = _stream.Read (buffer, 0, buffer.Length);
+				while (bytesReceived > 0) {
+					response.Append (Encoding.ASCII.GetString (buffer, 0, bytesReceived));
+					bytesReceived = _stream.Read (buffer, 0, buffer.Length);
 				}
 			}
 			return new SocksHttpWebResponse(response.ToString());
