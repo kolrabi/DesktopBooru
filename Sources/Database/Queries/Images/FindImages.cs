@@ -178,7 +178,7 @@ namespace Booru.Queries.Images
 
 			var builder = new System.Text.StringBuilder ();
 			builder.Append(
-				"SELECT files.md5sum, " +
+				"SELECT   DISTINCT files.md5sum, " +
 				"         files.path, " +
 				"         images.elo," +
 				"         images.votes, " +
