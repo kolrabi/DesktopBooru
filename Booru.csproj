@@ -8,7 +8,6 @@
     <RootNamespace>Booru</RootNamespace>
     <AssemblyName>booru3</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <ApplicationIcon>Pixbufs\icon.png</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -187,6 +186,16 @@
       <LogicalName>Booru.Resources.GUI.VoteTab.glade</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\GUI\ImageVoteWidget.glade" />
+    <EmbeddedResource Include="Resources\GUI\play.png" />
+    <EmbeddedResource Include="Resources\GUI\stop.png" />
+    <EmbeddedResource Include="Resources\GUI\tag.png" />
+    <EmbeddedResource Include="Resources\GUI\shuffle.png" />
+    <EmbeddedResource Include="Resources\GUI\mark.png" />
+    <EmbeddedResource Include="Resources\GUI\unmark.png" />
+    <EmbeddedResource Include="Resources\GUI\delete.png" />
+    <EmbeddedResource Include="Resources\GUI\viewexternal.png" />
+    <EmbeddedResource Include="Resources\GUI\abort.png" />
+    <EmbeddedResource Include="Resources\GUI\export.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

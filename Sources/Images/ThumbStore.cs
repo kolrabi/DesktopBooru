@@ -91,7 +91,8 @@ namespace Booru
 				throw new ArgumentNullException ();
 			
 			string tagsString = image.Details.Path + "\n" + string.Join (" ", image.Tags);
-			this.AppendValues (tagsString, image.Thumbnail, image);
+			var iter = this.Append ();
+			this.SetValues(iter, tagsString, image.Thumbnail, image);
 		}
 
 		/// <summary>
@@ -111,7 +112,7 @@ namespace Booru
 			if (!this.GetIter (out iter, rowRef.Path))
 				return null;
 
-			return (Image)this.GetValue(iter, ThumbStore.THUMB_STORE_COLUMN_IMAGE);
+			return (Image)this.GetValue (iter, ThumbStore.THUMB_STORE_COLUMN_IMAGE);
 		}
 
 		/// <summary>

@@ -9,6 +9,7 @@ namespace Booru {
 		[UI] Gtk.Box ImageViewBox;
 		[UI] Gtk.IconView ImageThumbView;
 		[UI] Gtk.Button ButtonSlideshow;
+		[UI] Gtk.Button OpenExternalButton;
 		[UI] Gtk.Button ExportButton;
 		[UI] Gtk.Button DeleteButton;
 		[UI] Gtk.Button StopButton;
@@ -20,10 +21,18 @@ namespace Booru {
 		[UI] Gtk.ButtonBox ButtonBox;
 		[UI] Gtk.Box ThumbBox;
 		[UI] Gtk.ProgressBar ExportProgress;
-		[UI] Gtk.Button UndeleteButton;
+		[UI] Gtk.Button MarkButton;
 
-		[UI] Gtk.Image PlayImage;
-		[UI] Gtk.Image StopImage;
+		Gtk.Image TagImage;
+		Gtk.Image PlayImage;
+		Gtk.Image StopImage;
+		Gtk.Image ShuffleImage;
+		Gtk.Image MarkImage;
+		Gtk.Image UnmarkImage;
+		Gtk.Image DeleteImage;
+		Gtk.Image ViewExternalImage;
+		Gtk.Image ExportImage;
+		Gtk.Image AbortImage;
 
 		public Image ActiveImage { get { return this.imageView.Image; } }
 
@@ -48,6 +57,26 @@ namespace Booru {
 
 			BooruApp.BooruApplication.EventCenter.WillQuit += Abort;
 			BooruApp.BooruApplication.EventCenter.FullscreenToggled += this.ToggleFullscreen;
+
+			this.PlayImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_PLAY));
+			this.StopImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_STOP));
+			this.TagImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_TAG));
+			this.ShuffleImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_SHUFFLE));
+			this.MarkImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_MARK));
+			this.UnmarkImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_UNMARK));
+			this.DeleteImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_DELETE));
+			this.ViewExternalImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_VIEW_EXTERNAL));
+			this.ExportImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_EXPORT));
+			this.AbortImage = new Gtk.Image (Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_BUTTON_ABORT));
+
+			this.ButtonSlideshow.Image = this.PlayImage;
+			this.ShowTagsButton.Image = this.TagImage;
+			this.ShuffleButton.Image = this.ShuffleImage;
+			this.MarkButton.Image = this.MarkImage;
+			this.DeleteButton.Image = this.DeleteImage;
+			this.OpenExternalButton.Image = this.ViewExternalImage;
+			this.ExportButton.Image = this.ExportImage;
+			this.StopButton.Image = this.AbortImage;
 
 			this.Removed += (o, args) => {
 				this.Abort ();
@@ -89,10 +118,13 @@ namespace Booru {
 			this.ImageThumbView.TooltipColumn = ThumbStore.THUMB_STORE_COLUMN_TOOLTIP;
 
 			this.ImageThumbView.Model.RowInserted += on_ImageThumbView_Model_RowInserted;
+			this.ImageThumbView.Model.RowChanged += on_ImageThumbView_Model_RowChanged;
 
 			this.StopButton.Sensitive = true;
 			this.Spinner.Active = true;
 			this.ExportButton.Sensitive = false;
+			this.MarkButton.Sensitive = false;
+			this.DeleteButton.Sensitive = false;
 		}
 
 		ImagesResultWidget Init(string searchString)
@@ -101,7 +133,7 @@ namespace Booru {
 			this.finder = new ImageFinder (searchString, this.store);
 			this.store.LastImageAdded+= () => Gtk.Application.Invoke((s,a)=>{
 				this.Spinner.Active = false;
-				this.StopButton.Sensitive = false;
+				this.StopButton.Visible = false;
 				this.ExportButton.Sensitive = true;
 			});
 
@@ -167,27 +199,28 @@ namespace Booru {
 			this.SelectImagePath (path);
 		}
 			
-		/// <summary>
-		/// Called from the thumb store when a new thumbnail was added. 
-		/// </summary>
-		/// <param name="sender">Sender.</param>
-		/// <param name="args">Arguments.</param>
 		void on_ImageThumbView_Model_RowInserted(object sender, Gtk.RowInsertedArgs args)
 		{
 			System.Diagnostics.Debug.Assert (BooruApp.BooruApplication.IsMainThread);
 
 			foundImageCount ++;
 
-			// make sure to select first image
-			if (this.ActiveImage == null) {
-				Gtk.TreeIter iter;
-				if (this.ImageThumbView.Model.GetIterFirst (out iter)) {
-					this.SelectImagePath (this.ImageThumbView.Model.GetPath (iter));
-				}
-			}
-
 			// update image count label 
 			this.ResultCountLabel.Text = this.foundImageCount.ToString();
+		}
+		/// <summary>
+		/// Called from the thumb store when a new thumbnail was added. 
+		/// </summary>
+		/// <param name="sender">Sender.</param>
+		/// <param name="args">Arguments.</param>
+		void on_ImageThumbView_Model_RowChanged(object sender, Gtk.RowChangedArgs args)
+		{
+			System.Diagnostics.Debug.Assert (BooruApp.BooruApplication.IsMainThread);
+
+			// make sure to select first image
+			if (this.ActiveImage == null) {
+				this.SelectImagePath (args.Path);
+			}
 		}
 
 		void SelectImageRowRef(Gtk.TreeRowReference rowRef)
@@ -289,7 +322,40 @@ namespace Booru {
 			}
 		}
 		#endregion
+
+		bool AreAllSelectedMarkedForDelete()
+		{
+			foreach (var path in this.ImageThumbView.SelectedItems) {
+				var rowRef = new Gtk.TreeRowReference (this.store, path);
+				var image = this.store.GetImage (rowRef);
+
+				if (image == null)
+					continue;
+				if (image.Tags == null)
+					continue;
+
+				if (!image.Tags.Contains ("deleteme"))
+					return false;
+			}
+			return true;
+		}
 			
+		bool IsAnySelectedMarkedForDelete()
+		{
+			foreach (var path in this.ImageThumbView.SelectedItems) {
+				var rowRef = new Gtk.TreeRowReference (this.store, path);
+				var image = this.store.GetImage (rowRef);
+
+				if (image == null)
+					continue;
+				if (image.Tags == null)
+					continue;
+
+				if (image.Tags.Contains ("deleteme"))
+					return true;
+			}
+			return false;
+		}
 		/// <summary>
 		/// Check if hitting the delete button should mark selection for deletion instead of physically deleting.
 		/// </summary>
@@ -319,90 +385,94 @@ namespace Booru {
 		void UpdateButtons()
 		{
 			if (this.ImageThumbView.SelectedItems.Length == 0) {
+				this.MarkButton.Sensitive = false;
 				this.DeleteButton.Sensitive = false;
 			} else {
-				this.DeleteButton.Sensitive = true;
+				bool allMarked = this.AreAllSelectedMarkedForDelete ();
+				bool anyMarked = this.IsAnySelectedMarkedForDelete ();
+				this.MarkButton.Sensitive = true;
+				this.DeleteButton.Sensitive = allMarked;
 
-				if (this.IsDeleteTaggingOnly ()) {
-					this.UndeleteButton.Sensitive = false;
-					this.DeleteButton.Label = "Mark";
+				if (anyMarked) {
+					this.MarkButton.Image = this.UnmarkImage;
+					this.MarkButton.TooltipText = "Unmark Image(s) for Deletion";
 				} else {
-					this.UndeleteButton.Sensitive = true;
-					this.DeleteButton.Label = "Delete";
+					this.MarkButton.Image = this.MarkImage;
+					this.MarkButton.TooltipText = "Mark Image(s) for Deletion";
 				}
 			}
 		}
 
 		void on_DeleteButton_clicked(object sender, EventArgs args)
 		{
-			if (this.IsDeleteTaggingOnly ()) {
+			Queue<Gtk.TreeRowReference> rowRefs = new Queue<Gtk.TreeRowReference> ();
+			List<Image> images = new List<Image> ();
+			foreach (var path in this.ImageThumbView.SelectedItems) {
+				var rowRef = new Gtk.TreeRowReference (this.store, path);
+				rowRefs.Enqueue (rowRef);
+
+				var image = this.store.GetImage (rowRef);
+				images.Add (image);
+			}
+
+			this.ImageThumbView.UnselectAll ();
+
+			while (rowRefs.Count > 0) {
+				Gtk.TreePath path = rowRefs.Dequeue().Path;
+
+				Gtk.TreeIter iter;
+				if (this.store.GetIter (out iter, path))
+					this.store.Remove (ref iter);
+
+				this.foundImageCount--;
+			}
+
+			var dbConfig = BooruApp.BooruApplication.Database.Config;
+			bool moveImages = dbConfig.GetBool ("deletemove.enable");
+			var targetPath = moveImages ? dbConfig.GetString("deletemove.path") : "";
+			foreach(var image in images) {
+				BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+					try {
+						// TODO: get alternative paths
+						if (System.IO.File.Exists (image.Details.Path)) {
+							if (moveImages) {
+								System.IO.File.Move (image.Details.Path, targetPath + "/" + System.IO.Path.GetFileName (image.Details.Path));
+								BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Moved file " + image.Details.Path + " to " + targetPath);
+							} else {
+								System.IO.File.Delete (image.Details.Path);
+								BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Deleted file " + image.Details.Path);
+							}
+						}
+						BooruApp.BooruApplication.Database.RemoveImage (image.Details.MD5);
+					} catch (Exception ex) {
+						BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Error, "Could not delete file " + image.Details.Path + ": " + ex.Message);
+						Console.WriteLine ("Could not delete file " + image.Details.Path + ": " + ex.Message);
+						Console.WriteLine (ex.StackTrace);
+					}
+				});
+			}
+
+			this.UpdateButtons ();
+		}
+
+		void on_MarkButton_clicked(object sender, EventArgs args)
+		{
+			bool anyMarked = this.IsAnySelectedMarkedForDelete ();
+			if (anyMarked) {
+				foreach (var path in this.ImageThumbView.SelectedItems) {
+					var image = this.store.GetImage (new Gtk.TreeRowReference (this.store, path));
+					image.RemoveTag ("deleteme");
+				}
+			} else {
 				foreach (var path in this.ImageThumbView.SelectedItems) {
 					var image = this.store.GetImage (new Gtk.TreeRowReference (this.store, path));
 					image.AddTag ("deleteme");
 				}
-				this.Advance (true);
-			} else {
-				Queue<Gtk.TreeRowReference> rowRefs = new Queue<Gtk.TreeRowReference> ();
-				List<Image> images = new List<Image> ();
-				foreach (var path in this.ImageThumbView.SelectedItems) {
-					var rowRef = new Gtk.TreeRowReference (this.store, path);
-					rowRefs.Enqueue (rowRef);
-
-					var image = this.store.GetImage (rowRef);
-					images.Add (image);
-				}
-
-				this.ImageThumbView.UnselectAll ();
-
-				while (rowRefs.Count > 0) {
-					Gtk.TreePath path = rowRefs.Dequeue().Path;
-
-					Gtk.TreeIter iter;
-					if (this.store.GetIter (out iter, path))
-						this.store.Remove (ref iter);
-
-					this.foundImageCount--;
-				}
-
-				var dbConfig = BooruApp.BooruApplication.Database.Config;
-				bool moveImages = dbConfig.GetBool ("deletemove.enable");
-				var targetPath = moveImages ? dbConfig.GetString("deletemove.path") : "";
-				foreach(var image in images) {
-					BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
-						try {
-							// TODO: get alternative paths
-							if (System.IO.File.Exists (image.Details.Path)) {
-								if (moveImages) {
-									System.IO.File.Move (image.Details.Path, targetPath + "/" + System.IO.Path.GetFileName (image.Details.Path));
-									BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Moved file " + image.Details.Path + " to " + targetPath);
-								} else {
-									System.IO.File.Delete (image.Details.Path);
-									BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Deleted file " + image.Details.Path);
-								}
-							}
-							BooruApp.BooruApplication.Database.RemoveImage (image.Details.MD5);
-						} catch (Exception ex) {
-							BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Error, "Could not delete file " + image.Details.Path + ": " + ex.Message);
-							Console.WriteLine ("Could not delete file " + image.Details.Path + ": " + ex.Message);
-							Console.WriteLine (ex.StackTrace);
-						}
-					});
-				}
-
 			}
 			this.UpdateButtons ();
 		}
 
-		void on_UndeleteButton_clicked(object sender, EventArgs args)
-		{
-			foreach (var path in this.ImageThumbView.SelectedItems) {
-				var image = this.store.GetImage (new Gtk.TreeRowReference (this.store, path));
-				image.RemoveTag ("deleteme");
-			}
-			this.UpdateButtons ();
-		}
-
-		void on_FullScreenButton_clicked(object sender, EventArgs args)
+		void on_OpenExternalButton_clicked(object sender, EventArgs args)
 		{
 			if (this.ActiveImage != null)
 				this.ActiveImage.ViewExternal ();

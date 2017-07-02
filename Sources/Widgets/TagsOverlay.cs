@@ -134,14 +134,15 @@ namespace Booru
 
 			// draw image info
 			this.DrawStringAt (0, 1, System.IO.Path.GetDirectoryName (image.Details.Path));
-			this.DrawStringAt (0, 2, "ELO:");
-			this.DrawStringAt (6, 2, image.Details.ELO.ToString ());
-			this.DrawStringAt (0, 3, "Votes:");
-			this.DrawStringAt (6, 3, string.Format ("{0} {1}:{2}", image.Details.Votes, image.Details.Wins, image.Details.Losses));
-			this.DrawStringAt (0, 4, "Size:");
-			this.DrawStringAt (6, 4, image.Details.Size.ToString ());
-			this.DrawStringAt (0, 5, "TagScore");
-			this.DrawStringAt (6, 5, image.TotalTagScore + " (" + image.AvgTagScore + ")");
+			this.DrawStringAt (0, 2, image.Details.MD5);
+			this.DrawStringAt (0, 3, "ELO:");
+			this.DrawStringAt (6, 3, image.Details.ELO.ToString ());
+			this.DrawStringAt (0, 4, "Votes:");
+			this.DrawStringAt (6, 4, string.Format ("{0} {1}:{2}", image.Details.Wins + image.Details.Losses, image.Details.Wins, image.Details.Losses));
+			this.DrawStringAt (0, 5, "Size:");
+			this.DrawStringAt (6, 5, image.Details.Size.ToString ());
+			this.DrawStringAt (0, 6, "TagScore");
+			this.DrawStringAt (6, 6, image.TotalTagScore + " (" + image.AvgTagScore + ")");
 
 			// draw tag list
 			int tagX = 0;

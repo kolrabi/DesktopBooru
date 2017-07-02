@@ -207,7 +207,7 @@ namespace Booru
 					this.ParseGelbooruData (entry, webClient.DownloadString (url));
 					askedServer = true;
 				} catch (Exception ex) {
-					BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Exception caught while asking gelbooru: " + ex.Message);
+					BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Exception caught while asking gelbooru: " + ex.Message + " " + ex.InnerException == null ? "no inner exception" : ex.InnerException.Message);
 				}
 			}
 

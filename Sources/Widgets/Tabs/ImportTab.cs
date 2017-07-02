@@ -139,11 +139,11 @@ namespace Booru {
 					if (entries.ContainsKey (entry)) {
 						var iter = entries[entry];
 						lock(entryStore)
-							entryStore.SetValues(iter, entry.Preview, System.IO.Path.GetDirectoryName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
+							entryStore.SetValues(iter, entry.Preview, System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
 						this.ImageEntryView.ScrollToCell(this.ImageEntryView.Model.GetPath(iter), this.ImageEntryView.Columns[0], false, 0,0);
 					} else {
 						lock(entryStore) {
-							var iter = entryStore.AppendValues (null, System.IO.Path.GetDirectoryName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
+							var iter = entryStore.AppendValues (null, System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
 							entries [entry] = iter;
 						}
 					}

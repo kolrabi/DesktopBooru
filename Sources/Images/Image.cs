@@ -118,7 +118,7 @@ namespace Booru
 				}
 			} catch(Exception ex) {
 				Console.WriteLine (ex.Message);
-				this.cachedAnimation = new Gdk.PixbufAnimation (null, Resources.ID_PIXBUFS_NOPREVIEW);
+				this.cachedAnimation = Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_NOPREVIEW);
 			}
 		}
 
