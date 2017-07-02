@@ -134,6 +134,76 @@ namespace Booru
 			// Step 7
 			return d[n, m];
 		}
+
+		public static int CompareNatural(this string str1, string str2)
+		{
+			var cultureInfo = System.Globalization.CultureInfo.CurrentUICulture;
+
+			if (str1 == str2) {
+				return 0;
+			}
+
+			if (str1 == null) {
+				return -1;
+			}
+
+			if (str2 == null) {
+				return 1;
+			}
+
+			int index1 = 0;
+			int index2 = 0;
+			while (index1 < str1.Length && index2 < str2.Length)
+			{
+				if (char.IsDigit(str1[index1]) && char.IsDigit(str2[index2]))
+				{
+					// skip 0s
+					while (index1 + 1 < str1.Length && char.IsDigit (str1 [index1 + 1]) && str1 [index1] == '0')
+						index1++;
+					while (index2 + 1 < str2.Length && char.IsDigit (str2 [index2 + 1]) && str2 [index2] == '0')
+						index2++;
+					
+					int numStartIndex1 = index1++;
+					int numStartIndex2 = index2++;
+
+					while (index1 < str1.Length && Char.IsDigit(str1[index1]))
+						index1++;
+					
+					while (index2 < str2.Length && Char.IsDigit(str2[index2]))
+						index2++;
+
+					int numEndIndex1 = index1;
+					int numEndIndex2 = index2;
+
+					int numLength1 = numEndIndex1 - numStartIndex1;
+					int numLength2 = numEndIndex2 - numStartIndex2;
+
+					if (numLength1 > numLength2) {
+						return 1;
+					}
+					if (numLength1 < numLength2) {
+						return -1;
+					}
+
+					int result = cultureInfo.CompareInfo.Compare (str1, numStartIndex1, numLength1, str2, numStartIndex2, numLength2);
+					if (result != 0)
+						return result;
+				}
+				else
+				{
+					int result = cultureInfo.CompareInfo.Compare(str1, index1, 1, str2, index2, 1);
+					if (result != 0)
+						return result;
+					index1++;
+					index2++;
+				}
+			}
+
+			if (index1 < str1.Length)
+				return 1;
+
+			return -1;
+		}
 	}
 }
 

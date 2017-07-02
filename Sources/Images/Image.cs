@@ -99,7 +99,7 @@ namespace Booru
 							this.zipEntries.Add(entry);
 					}
 					this.zipEntries.Sort((a,b) => {
-						return a.Name.CompareTo(b.Name);
+						return a.Name.CompareNatural(b.Name);
 					});
 				}
 			} catch(Exception ex) {
