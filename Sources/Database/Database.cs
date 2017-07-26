@@ -94,7 +94,24 @@ namespace Booru
 						this.UpgradeDatabase(version);
 					}
 				
+					Logger.Log(BooruLog.Severity.Info, "Caching tags...");
 					this.CacheTags ();
+
+					Logger.Log(BooruLog.Severity.Info, "Checking for obsolete path references...");
+					var allPaths = this.GetAllPaths();
+					var deletedPaths = new List<string>();
+					foreach(var path in allPaths)
+					{
+						if (!System.IO.File.Exists(path)) {
+							deletedPaths.Add(path);
+							this.RemoveImagePath(path);
+						}
+					}
+					if (deletedPaths.Count > 0) {
+						Logger.Log(BooruLog.Severity.Info, "Removed "+deletedPaths.Count+" path references:");
+						foreach(var path in deletedPaths)
+							Logger.Log(BooruLog.Severity.Info, "    "+path);
+					}
 				
 					Logger.Log(BooruLog.Severity.Info, "Database successfully opened.");
 					BooruApp.BooruApplication.EventCenter.FinishChangeDatabase (true);
