@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
-using ICSharpCode.SharpZipLib.Zip;
+using System.IO.Compression;
 
 namespace Booru
 {
@@ -60,11 +60,33 @@ namespace Booru
 			this.cachedThumbnail = null;
 
 			if (this.zipFile != null)
-				this.zipFile.Close ();
+				this.zipFile.Dispose ();
+			this.zipFile = null;
 		}
 
-		private ZipFile zipFile;
-		private List<ZipEntry> zipEntries = new List<ZipEntry> ();
+		private ZipArchive zipFile;
+		private List<ZipArchiveEntry> zipEntries = new List<ZipArchiveEntry> ();
+
+		private void OpenZip()
+		{
+			if (this.zipFile != null)
+				return;
+
+			this.maxImage = -1;
+			this.zipFile = new ZipArchive(File.OpenRead(this.Details.Path));
+			this.zipEntries.Clear();
+
+			foreach(var entry in this.zipFile.Entries) {
+				this.zipEntries.Add(entry);
+				this.maxImage++;
+			}
+			this.zipEntries.Sort((a,b) => {
+				return a.Name.CompareNatural(b.Name);
+			});
+
+			if (this.maxImage != -1)
+				this.subImage = this.subImage % (1+this.maxImage);
+		}
 
 		void SelectBaseImage()
 		{
@@ -76,7 +98,7 @@ namespace Booru
 			this.CacheAnimation ();
 
 			if (this.zipFile != null)
-				this.zipFile.Close ();
+				this.zipFile.Dispose ();
 			this.zipFile = null;
 			this.zipEntries.Clear ();
 		}
@@ -89,19 +111,7 @@ namespace Booru
 			}
 
 			try {
-				if (this.zipFile == null) {
-					this.zipFile = new ZipFile(this.Details.Path);
-					this.zipEntries.Clear();
-					var e = this.zipFile.GetEnumerator();
-					while(e.MoveNext()) {
-						var entry = (ZipEntry)e.Current;
-						if (entry.IsFile)
-							this.zipEntries.Add(entry);
-					}
-					this.zipEntries.Sort((a,b) => {
-						return a.Name.CompareNatural(b.Name);
-					});
-				}
+				this.OpenZip();
 			} catch(Exception ex) {
 				Console.WriteLine (ex.Message);
 				this.SelectBaseImage ();
@@ -110,7 +120,7 @@ namespace Booru
 
 			try {
 				var entry = this.zipEntries[this.subImage];
-				using (var stream = this.zipFile.GetInputStream (entry)) {
+				using (var stream = entry.Open()) {
 					if (this.cachedAnimation != null)
 						this.cachedAnimation.Dispose ();
 					this.cachedAnimation = new Gdk.PixbufAnimation (stream);
@@ -246,18 +256,7 @@ namespace Booru
 		private Gdk.PixbufAnimation CacheAnimation()
 		{
 			if (this.zipFile == null && this.cachedAnimation == null && this.Details.type == BooruImageType.Comix) {
-				try {
-					this.zipFile = new ZipFile(this.Details.Path);
-					var e = zipFile.GetEnumerator ();
-					this.maxImage = -1;
-					while(e.MoveNext()) {
-						this.maxImage++;
-					}
-					if (this.maxImage != -1)
-					this.subImage = this.subImage % (1+this.maxImage);
-				} catch(Exception ex) {
-					Console.WriteLine (ex.Message);
-				}
+				this.OpenZip ();
 			}
 
 			if (this.cachedAnimation == null)

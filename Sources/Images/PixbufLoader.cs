@@ -1,5 +1,5 @@
 ﻿using System;
-using ICSharpCode.SharpZipLib.Zip;
+using System.IO.Compression;
 
 namespace Booru
 {
