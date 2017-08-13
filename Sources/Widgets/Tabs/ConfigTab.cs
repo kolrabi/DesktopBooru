@@ -6,6 +6,9 @@ namespace Booru {
 
 	public sealed class ConfigTab : LoadableWidget
 	{
+		[UI] 
+		private Gtk.Grid ConfigGrid;
+
 		public static ConfigTab Create ()
 		{
 			return LoadableWidget.Create<ConfigTab> ();
@@ -13,6 +16,36 @@ namespace Booru {
 
 		ConfigTab (Gtk.Builder builder, IntPtr handle) : base (builder, handle)
 		{
+			int n = 100;
+			foreach (var plugin in BooruApp.BooruApplication.PluginLoader.LoadedPlugins) {
+				Gtk.Label label = new Gtk.Label ("<b>"+plugin.Name+"</b>");
+				label.SetAlignment (0.0f, 0.5f);
+				label.UseMarkup = true;
+				label.MarginTop = 32;
+				ConfigGrid.Attach(label, 0, n, 5, 1);
+				n++;
+
+				Gtk.HSeparator sep = new Gtk.HSeparator ();
+				sep.MarginBottom = 16;
+				ConfigGrid.Attach(sep, 0, n, 5, 1);
+				n++;
+
+				label = new Gtk.Label (plugin.ConfigDesc);
+				label.SetAlignment (0.0f, 0.5f);
+				label.UseMarkup = true;
+				ConfigGrid.Attach(label, 0, n, 5, 1);
+				n++;
+
+				foreach (var configDef in plugin.ConfigEntryDefinitions) {
+					Gtk.Label configLabel = new Gtk.Label (configDef.Label);
+					configLabel.Name = configDef.Name;
+					configLabel.TooltipMarkup = configDef.Tooltip;
+					configLabel.SetAlignment (0.0f, 0.5f);
+					ConfigGrid.Attach(configLabel, 0, n, 1, 1);
+					n++;
+				}
+			}
+
 			this.ConnectAllChildren (this);
 			this.ShowAll ();
 

@@ -155,8 +155,12 @@ namespace Booru
 			int index2 = 0;
 			while (index1 < str1.Length && index2 < str2.Length)
 			{
-				if (char.IsDigit(str1[index1]) && char.IsDigit(str2[index2]))
-				{
+				if (str1 [index1] == str2 [index2]) {
+					index1++;
+					index2++;
+				}
+
+				if (char.IsDigit(str1[index1]) && char.IsDigit(str2[index2])) {
 					// skip 0s
 					while (index1 + 1 < str1.Length && char.IsDigit (str1 [index1 + 1]) && str1 [index1] == '0')
 						index1++;

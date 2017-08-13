@@ -152,6 +152,9 @@
     <Compile Include="Sources\Threads\TaskRunner.cs" />
     <Compile Include="Sources\Widgets\LoadableWidget.cs" />
     <Compile Include="Sources\Util\CairoHelper.cs" />
+    <Compile Include="Sources\Widgets\TagsEntryWidget.cs" />
+    <Compile Include="Sources\plugin\PluginInterface.cs" />
+    <Compile Include="Sources\plugin\PluginLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\SQL\schema.sql">
@@ -224,5 +227,6 @@
     <Folder Include="Sources\Database\Queries\Config\" />
     <Folder Include="Sources\Database\Entities\" />
     <Folder Include="Sources\Threads\" />
+    <Folder Include="Sources\plugin\" />
   </ItemGroup>
 </Project>

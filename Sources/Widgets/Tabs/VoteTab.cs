@@ -90,7 +90,7 @@ namespace Booru {
 			widget.IsPaused = true;
 
 			this.nLoadingImages++;
-			this.LoadSpinner.Active = true;
+			this.LoadSpinner.Visible = true;
 		}
 
 		void FinishLoading()
@@ -113,7 +113,7 @@ namespace Booru {
 				this.LeftImage.IsPaused = false;
 				this.RightImage.IsPaused = false;
 
-				this.LoadSpinner.Active = false;
+				this.LoadSpinner.Visible = false;
 			}
 		}
 

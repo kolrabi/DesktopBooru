@@ -3,6 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Booru", "Booru.csproj", "{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GelbooruPlugin", "GelbooruPlugin\GelbooruPlugin.csproj", "{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DanbooruPlugin", "DanbooruPlugin\DanbooruPlugin.csproj", "{C19B75E3-0B9A-4129-8D0E-09536816A61A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -13,6 +17,14 @@ Global
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Debug|x86.Build.0 = Debug|x86
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Release|x86.ActiveCfg = Release|x86
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Release|x86.Build.0 = Release|x86
+		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Debug|x86.Build.0 = Debug|Any CPU
+		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Release|x86.ActiveCfg = Release|Any CPU
+		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Release|x86.Build.0 = Release|Any CPU
+		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Debug|x86.Build.0 = Debug|Any CPU
+		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Release|x86.ActiveCfg = Release|Any CPU
+		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Booru.csproj

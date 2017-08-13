@@ -250,9 +250,13 @@ namespace Ditrans
 				var stream = new NetworkStream (socket);
 				var sslStream = new System.Net.Security.SslStream (stream);
 
-				sslStream.AuthenticateAsClient (RequestUri.Host);
-
-				return sslStream;
+				try {
+					sslStream.AuthenticateAsClient (RequestUri.Host);
+					return sslStream;
+				} catch(Exception ex) {
+					Console.WriteLine (ex.Message);
+					return null;
+				}
 			} else {
 				throw new InvalidDataException("unknown uri scheme "+RequestUri.Scheme);
 			}

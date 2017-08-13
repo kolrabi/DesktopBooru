@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Booru
 {
@@ -17,6 +18,8 @@ namespace Booru
 		public bool IsMainThread { get { return MainThreadId == System.Threading.Thread.CurrentThread.ManagedThreadId; } }
 
 		public string DBFile;
+
+		public PluginLoader PluginLoader;
 
 		public static void Main (string[] args)
 		{
@@ -60,6 +63,9 @@ namespace Booru
 			this.Settings = new BooruSettings ();
 			this.Database = new Database ();
 
+			this.PluginLoader = new PluginLoader ();
+			this.PluginLoader.LoadPlugins ();
+
 			// create gui
 			this.MainWindow = MainWindow.Create ();
 		}
@@ -94,6 +100,10 @@ namespace Booru
 			bool ok = this.EventCenter.Quit ();
 
 			if (ok) {
+
+				foreach (var plugin in this.PluginLoader.LoadedPlugins) {
+					plugin.OnUnload ();
+				}
 				Booru.DatabaseQuery.DumpTimes ();
 				Gtk.Application.Quit ();
 				return true;
@@ -120,6 +130,19 @@ namespace Booru
 
 			BooruApp.BooruApplication.Database.CreateDatabase(connection);
 			BooruApp.BooruApplication.Settings.Set ("last_used_db", dbFile);
+		}
+
+		public string DownloadText(string url, IDictionary<string, string> cookies)
+		{
+			var useProxy = BooruApp.BooruApplication.Database.Config.GetBool ("net.proxy.enable");
+			var proxyUrl = BooruApp.BooruApplication.Database.Config.GetString ("net.proxy.url");
+
+			var webClient = new Booru.SocksWebClient(proxyUrl, useProxy);
+			if (cookies != null)
+				foreach (var cookie in cookies)
+					webClient.Cookies [cookie.Key] = cookie.Value;
+
+			return webClient.DownloadString (url);
 		}
 	}
 }

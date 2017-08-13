@@ -40,6 +40,8 @@ namespace Booru {
 		private readonly ImageViewWidget imageView;
 		private readonly TagsOverlay tagsOverlay;
 
+		private TagsEntryWidget tagsBox;
+
 		private ImageFinder finder;
 
 		private ImageExporter exporter;
@@ -125,6 +127,13 @@ namespace Booru {
 			this.ExportButton.Sensitive = false;
 			this.MarkButton.Sensitive = false;
 			this.DeleteButton.Sensitive = false;
+
+
+
+			var box = (Gtk.Box)this.StopButton.Parent.Parent;
+			this.tagsBox = new TagsEntryWidget ();
+			box.PackEnd (this.tagsBox, false, true, 0);
+			this.tagsBox.Show ();
 		}
 
 		ImagesResultWidget Init(string searchString)
@@ -263,6 +272,8 @@ namespace Booru {
 
 			// get newly selected image
 			this.imageView.Image = image;
+
+			this.tagsBox.SetTags (image.Tags);
 
 			// clear tags entry to not confuse user
 			this.TagsEntry.Text = "";

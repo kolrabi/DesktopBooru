@@ -172,59 +172,18 @@ namespace Booru
 
 			bool askedServer = false;
 
-			var useGelbooru = callBooru && BooruApp.BooruApplication.Database.Config.GetBool ("gelbooru.enable");
-			var gelbooruUser = BooruApp.BooruApplication.Database.Config.GetString ("gelbooru.user");
-			var gelbooruPass = BooruApp.BooruApplication.Database.Config.GetString ("gelbooru.pass");
-			var gelbooruURL = BooruApp.BooruApplication.Database.Config.GetString ("gelbooru.url");
-			var knownOnGelbooru = tags.Contains ("known_on_gelbooru");
-			var isGelbooruStatusKnown = !tagMeExpired && (knownOnGelbooru || tags.Contains ("not_on_gelbooru"));
+			foreach (var plugin in BooruApp.BooruApplication.PluginLoader.LoadedPlugins) {
+				var tagFinderIface = plugin as TagFinderPluginInterface;
+				if (tagFinderIface == null)
+					continue;
 
-			var useDanbooru = callBooru && BooruApp.BooruApplication.Database.Config.GetBool ("danbooru.enable");
-			var danbooruURL = BooruApp.BooruApplication.Database.Config.GetString ("danbooru.url");
-			var knownOnDanbooru = tags.Contains ("known_on_danbooru");
-			var isDanbooruStatusKnown = !tagMeExpired && (knownOnDanbooru || tags.Contains ("not_on_danbooru"));
-
-			var useProxy = BooruApp.BooruApplication.Database.Config.GetBool ("net.proxy.enable");
-			var proxyUrl = BooruApp.BooruApplication.Database.Config.GetString ("net.proxy.url");
-
-			if (tagMeExpired && (knownOnDanbooru || knownOnGelbooru) && (useGelbooru || useDanbooru)) {
-				BooruApp.BooruApplication.Database.RemoveImageTag (entry.MD5, "tagme");
-			}
-
-			if (useGelbooru && !isGelbooruStatusKnown) {
-				entry.Status = "Asking gelbooru...";
+				entry.Status = "Asking "+plugin.Name+"...";
 				CallUpdate (entry);
 
-				try {
-					var webClient = new SocksWebClient(proxyUrl, useProxy);
-					if (!string.IsNullOrEmpty(gelbooruUser))
-						webClient.Cookies ["user_id"] = gelbooruUser;
-					
-					if (!string.IsNullOrEmpty(gelbooruPass))
-						webClient.Cookies ["pass_hash"] = gelbooruPass;
-
-					var url = string.Format(gelbooruURL, entry.MD5);
-					this.ParseGelbooruData (entry, webClient.DownloadString (url));
+				if (tagFinderIface.FindTagsForFile (entry.path, entry.MD5, tagMeExpired, tags))
 					askedServer = true;
-				} catch (Exception ex) {
-					BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Exception caught while asking gelbooru: " + ex.Message + " " + ex.InnerException == null ? "no inner exception" : ex.InnerException.Message);
-				}
 			}
-
-			if (useDanbooru && !isDanbooruStatusKnown) {
-				entry.Status = "Asking danbooru...";
-				CallUpdate (entry);
-
-				try {
-					var webClient = new SocksWebClient(proxyUrl, useProxy);
-
-					var url = string.Format(danbooruURL, entry.MD5);
-					this.ParseDanbooruData (entry, webClient.DownloadString (url));
-					askedServer = true;
-				} catch (Exception ex) {
-					BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Exception caught while asking danbooru: " + ex.Message);
-				}
-			}
+			CallUpdate (entry);
 
 			if (details == null) {
 				var tmpPixBuf = PixbufLoader.LoadPixbufAnimationForImage (entry.path, entry.MD5);
@@ -250,64 +209,6 @@ namespace Booru
 			}
 			if (askedServer)
 				Thread.Sleep (100);
-		}
-
-		private bool ParseBooruData(ImageEntry entry, string tagData)
-		{			
-			try {
-				XmlDocument doc = new XmlDocument ();
-				doc.LoadXml (tagData);
-
-				XmlNode node = doc.SelectSingleNode ("posts/post");
-				if (node != null) {
-					XmlNode tagsNode = node.Attributes.GetNamedItem ("tags");
-					if (tagsNode != null) {
-						string tagString = tagsNode.InnerText;
-						entry.Tags.AddRange (tagString.Split (" ".ToCharArray (), StringSplitOptions.RemoveEmptyEntries));
-					}
-					return true;
-				} else {
-					return false;
-				}
-			} catch(Exception ex) {
-				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Could not parse booru data: " + ex.Message);
-				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Path: " + entry.path);
-				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Network, BooruLog.Severity.Error, "Data: " + tagData);
-				return false;
-			}
-		}
-
-		private void ParseDanbooruData(ImageEntry entry, string tagData)
-		{
-			if (string.IsNullOrWhiteSpace (tagData))
-				return;
-			
-			if (ParseBooruData (entry, tagData)) {
-				entry.Tags.Add ("known_on_danbooru");
-			} else {
-				entry.Tags.Add ("not_on_danbooru");
-			}
-			entry.Tags = new List<string>(entry.Tags.Distinct ());
-			entry.Tags.Sort ();
-			CallUpdate (entry);
-		}
-
-		private void ParseGelbooruData(ImageEntry entry, string tagData)
-		{
-			if (string.IsNullOrWhiteSpace (tagData))
-				return;
-
-			if (tagData.Contains ("301 Moved"))
-				return;
-			
-			if (ParseBooruData (entry, tagData)) {
-				entry.Tags.Add ("known_on_gelbooru");
-			} else {
-				entry.Tags.Add ("not_on_gelbooru");
-			}
-			entry.Tags = new List<string>(entry.Tags.Distinct ());
-			entry.Tags.Sort ();
-			CallUpdate (entry);
 		}
 
 		private string GetEntryMD5(ImageEntry entry) 
