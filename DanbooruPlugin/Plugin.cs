@@ -39,10 +39,10 @@ namespace DanbooruPlugin
 
 			try {
 				var url = string.Format(danbooruURL, md5);
-				if (!this.ParseData (App.DownloadText(url, null), tags))
+				if (!this.ParseData (App.Network.DownloadText(url, null), tags))
 					return false;
 			} catch (Exception ex) {
-				App.Log.Log(Booru.BooruLog.Category.Network, Booru.BooruLog.Severity.Error, "Exception caught while asking danbooru: " + ex.Message + " " + ex.InnerException == null ? "no inner exception" : ex.InnerException.Message);
+				App.Log.Log(Booru.BooruLog.Category.Network, Booru.BooruLog.Severity.Error, "Exception caught while asking danbooru: " + ex.Message + " " + (ex.InnerException == null ? "no inner exception" : ex.InnerException.Message));
 				return false;
 			}
 

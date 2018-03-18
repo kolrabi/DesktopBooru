@@ -25,6 +25,7 @@ namespace Booru
 		protected override WebRequest GetWebRequest (Uri address)
 		{
 			var request = SocksHttpWebRequest.Create (address, this.Cookies, this.ProxyType);
+			request.Headers = this.Headers;
 			request.Proxy = this.Proxy;
 			return request;
 		}

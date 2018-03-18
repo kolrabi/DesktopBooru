@@ -4,9 +4,9 @@ using System.Data;
 
 namespace Booru.Queries.Files
 {
-	public class GetForMD5 : DatabaseQuery
+	public class GetMD5 : DatabaseQuery
 	{
-		private GetForMD5 () : base(
+		private GetMD5 () : base(
 			"  SELECT md5sum " +
 			"    FROM " + FilesTableName + " AS files " +
 			"   WHERE files.path = @path "
@@ -18,7 +18,7 @@ namespace Booru.Queries.Files
 
 		public static byte[] Execute(string path)
 		{
-			return (byte[])new GetForMD5().ExecuteScalar (path);
+			return (byte[])new GetMD5().ExecuteScalar (path);
 		}
 	}
 }

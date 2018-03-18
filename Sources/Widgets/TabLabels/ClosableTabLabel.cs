@@ -31,7 +31,7 @@ namespace Booru {
 		}
 
 		void closeTab()
-		{
+		{			
 			this.ParentNotebook.Remove (this.PageWidget);
 			this.PageWidget.Destroy ();
 		}

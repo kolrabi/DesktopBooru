@@ -36,6 +36,13 @@ namespace Booru
 				animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath + "/" + md5 + ".jpg");
 				animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath + "/" + md5 + ".png");
 			}
+			if (animation == null) {
+				var configVidthumbsPath2 = BooruApp.BooruApplication.Database.Config.GetString ("vidthumbs.path2");
+				if (!string.IsNullOrEmpty (configVidthumbsPath2)) {
+					animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath2 + "/" + md5 + ".jpg");
+					animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath2 + "/" + md5 + ".png");
+				}
+			}
 
 			animation = animation ?? new Gdk.PixbufAnimation (null, Resources.ID_PIXBUFS_NOPREVIEW);
 

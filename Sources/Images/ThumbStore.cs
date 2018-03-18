@@ -43,7 +43,8 @@ namespace Booru
 		{
 			if (image == null)
 				throw new ArgumentNullException ();
-			
+
+			image.AddRef ();
 			this.addedImages.Enqueue (image);
 		}
 
@@ -112,6 +113,11 @@ namespace Booru
 			if (!this.GetIter (out iter, rowRef.Path))
 				return null;
 
+			return GetImage (iter);
+		}
+
+		public Image GetImage(Gtk.TreeIter iter)
+		{
 			return (Image)this.GetValue (iter, ThumbStore.THUMB_STORE_COLUMN_IMAGE);
 		}
 

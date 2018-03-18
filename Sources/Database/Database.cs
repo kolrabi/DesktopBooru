@@ -175,13 +175,24 @@ namespace Booru
 
 			List<string> imageTagList = new List<string>(tags.Split (" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
 
-			Queries.Images.Add.Execute (md5, fileType);
-			Queries.Files.Add.Execute (md5, path);
+			lock (BooruApp.BooruApplication.Database.Connection) {
+				var transaction = BooruApp.BooruApplication.Database.Connection.BeginTransaction ();
+				try {
+					Queries.Images.Add.Execute (md5, fileType);
+					Queries.Files.Add.Execute (md5, path);
 
-			foreach (string tag in imageTagList) {
-				this.AddImageTag (md5, tag); 
+					foreach (string tag in imageTagList) {
+						this.AddImageTag (md5, tag); 
+					}
+					transaction.Commit ();
+					return true;
+				} catch (Exception ex) {
+					transaction.Rollback ();
+					Logger.Log (BooruLog.Severity.Error, md5 + ": DB Update threw exception: " + ex.Message);
+					Logger.Log (BooruLog.Severity.Error, ex.StackTrace);
+					return false;
+				}
 			}
-			return true;
 		}
 
 		public void SetImageType(string md5, BooruImageType type)
@@ -220,9 +231,9 @@ namespace Booru
 			return Queries.Files.GetAll.Execute ();
 		}
 			
-		public DatabaseCursor<ImageDetails> QueryRandomImagesForVoting(BooruImageType type)
+		public DatabaseCursor<ImageDetails> QueryRandomImagesForVoting(BooruImageType type, bool asc)
 		{
-			return Queries.Images.NextVoteImages.Execute (type);
+			return Queries.Images.NextVoteImages.Execute (type, asc);
 		}
 
 		public DatabaseCursor<ImageDetails> QueryImagesWithTags(string tagString)
@@ -233,6 +244,11 @@ namespace Booru
 		public List<string> GetImageTags(string md5)
 		{
 			return Queries.ImageTags.Get.Execute (md5);
+		}
+
+		public List<string> GetImagePaths(string md5)
+		{
+			return Queries.Files.GetForImage.Execute (md5);
 		}
 
 		public ImageDetails GetImageDetails(string md5)
@@ -250,7 +266,7 @@ namespace Booru
 
 		public string GetPathMD5(string path)
 		{
-			byte[] md5blob = Queries.Files.GetForMD5.Execute (path);
+			byte[] md5blob = Queries.Files.GetMD5.Execute (path);
 			if (md5blob == null)
 				return null;
 

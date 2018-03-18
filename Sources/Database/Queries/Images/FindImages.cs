@@ -147,6 +147,10 @@ namespace Booru.Queries.Images
 						queryParams.OrderBy.Add(" RANDOM() ");
 						return null;
 
+					case "added":
+						queryParams.OrderBy.Add(" added " + orderString);
+						return null;
+
 					default:
 						BooruApp.BooruApplication.Database.Logger.Log(BooruLog.Severity.Error, "Unknown sorting: " + argString);
 						return null;

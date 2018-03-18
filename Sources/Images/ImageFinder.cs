@@ -58,6 +58,7 @@ namespace Booru
 			image.CacheThumbnail();
 
 			this.model.QueueAddedImage (image);
+			image.Release ();
 
 			this.ResultCount ++;
 		}

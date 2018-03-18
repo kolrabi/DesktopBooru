@@ -40,8 +40,6 @@ namespace Booru {
 		private readonly ImageViewWidget imageView;
 		private readonly TagsOverlay tagsOverlay;
 
-		private TagsEntryWidget tagsBox;
-
 		private ImageFinder finder;
 
 		private ImageExporter exporter;
@@ -128,12 +126,10 @@ namespace Booru {
 			this.MarkButton.Sensitive = false;
 			this.DeleteButton.Sensitive = false;
 
-
-
-			var box = (Gtk.Box)this.StopButton.Parent.Parent;
-			this.tagsBox = new TagsEntryWidget ();
-			box.PackEnd (this.tagsBox, false, true, 0);
-			this.tagsBox.Show ();
+			//var box = (Gtk.Box)this.StopButton.Parent.Parent;
+			//this.tagsBox = new TagsEntryWidget ();
+			//box.PackEnd (this.tagsBox, false, true, 0);
+			//this.tagsBox.Show ();
 		}
 
 		ImagesResultWidget Init(string searchString)
@@ -157,6 +153,22 @@ namespace Booru {
 			this.finder.Abort ();
 
 			this.StopSlideShow ();
+		}
+
+		public override void Destroy()
+		{
+			this.Abort ();
+
+			Gtk.TreeIter iter;
+			var model = this.ImageThumbView.Model as ThumbStore;
+
+			if (model.GetIterFirst (out iter)) {
+				do {
+					model.GetImage(iter).Release();
+				} while(model.IterNext (ref iter));
+			}
+
+			base.Destroy();
 		}
 
 		#region Image navigation
@@ -264,16 +276,10 @@ namespace Booru {
 			if (image == oldImage)
 				return;
 
-			// unload current imag
-			if (oldImage != null) {
-				this.imageView.Image = null;
-				oldImage.Dispose ();
-			}
-
 			// get newly selected image
 			this.imageView.Image = image;
 
-			this.tagsBox.SetTags (image.Tags);
+			// this.tagsBox.SetTags (image.Tags);
 
 			// clear tags entry to not confuse user
 			this.TagsEntry.Text = "";
@@ -371,27 +377,27 @@ namespace Booru {
 		/// Check if hitting the delete button should mark selection for deletion instead of physically deleting.
 		/// </summary>
 		/// <returns><c>true</c> if tagging only; otherwise, <c>false</c>.</returns>
-		bool IsDeleteTaggingOnly()
-		{			
-			// all selected images need to be tagged already to be deleted, so if any image
-			// doesn't have the tag, delete button should only tag
-			foreach (var path in this.ImageThumbView.SelectedItems) {
-				var rowRef = new Gtk.TreeRowReference (this.store, path);
-				var image = this.store.GetImage (rowRef);
-
-				//System.Diagnostics.Debug.Assert (image != null);
-				if (image == null)
-					continue;
-
-				System.Diagnostics.Debug.Assert (image.Tags != null);
-				if (image.Tags == null)
-					continue;
-
-				if (!image.Tags.Contains ("deleteme"))
-					return true;
-			}
-			return false;
-		}
+//		bool IsDeleteTaggingOnly()
+//		{			
+//			// all selected images need to be tagged already to be deleted, so if any image
+//			// doesn't have the tag, delete button should only tag
+//			foreach (var path in this.ImageThumbView.SelectedItems) {
+//				var rowRef = new Gtk.TreeRowReference (this.store, path);
+//				var image = this.store.GetImage (rowRef);
+//
+//				//System.Diagnostics.Debug.Assert (image != null);
+//				if (image == null)
+//					continue;
+//
+//				System.Diagnostics.Debug.Assert (image.Tags != null);
+//				if (image.Tags == null)
+//					continue;
+//
+//				if (!image.Tags.Contains ("deleteme"))
+//					return true;
+//			}
+//			return false;
+//		}
 
 		void UpdateButtons()
 		{
@@ -443,23 +449,26 @@ namespace Booru {
 			var targetPath = moveImages ? dbConfig.GetString("deletemove.path") : "";
 			foreach(var image in images) {
 				BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
-					try {
-						// TODO: get alternative paths
-						if (System.IO.File.Exists (image.Details.Path)) {
-							if (moveImages) {
-								System.IO.File.Move (image.Details.Path, targetPath + "/" + System.IO.Path.GetFileName (image.Details.Path));
-								BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Moved file " + image.Details.Path + " to " + targetPath);
-							} else {
-								System.IO.File.Delete (image.Details.Path);
-								BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Deleted file " + image.Details.Path);
+					var paths = BooruApp.BooruApplication.Database.GetImagePaths(image.Details.MD5);
+					foreach (string source in paths) {
+						try {
+							string target = targetPath + "/" + System.IO.Path.GetFileName (source);
+							if (System.IO.File.Exists (source)) {
+								if (moveImages && !System.IO.File.Exists(target)) {
+									System.IO.File.Move (source, target);
+									BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Moved file " + source + " to " + targetPath);
+								} else {
+									System.IO.File.Delete (source);
+									BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Info, "Deleted file " + source);
+								}
 							}
+						} catch (Exception ex) {
+							BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Error, "Could not delete file " + source + ": " + ex.Message);
+							Console.WriteLine ("Could not delete file " + source + ": " + ex.Message);
+							Console.WriteLine (ex.StackTrace);
 						}
-						BooruApp.BooruApplication.Database.RemoveImage (image.Details.MD5);
-					} catch (Exception ex) {
-						BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Error, "Could not delete file " + image.Details.Path + ": " + ex.Message);
-						Console.WriteLine ("Could not delete file " + image.Details.Path + ": " + ex.Message);
-						Console.WriteLine (ex.StackTrace);
 					}
+					BooruApp.BooruApplication.Database.RemoveImage (image.Details.MD5);
 				});
 			}
 
@@ -486,7 +495,7 @@ namespace Booru {
 		void on_OpenExternalButton_clicked(object sender, EventArgs args)
 		{
 			if (this.ActiveImage != null)
-				this.ActiveImage.ViewExternal ();
+				this.ActiveImage.ViewExternal (this.imageView.Window.Visual.OwnedHandle.ToInt32());
 		}
 
 		void on_ShowTagsButton_toggled(object sender, EventArgs args)

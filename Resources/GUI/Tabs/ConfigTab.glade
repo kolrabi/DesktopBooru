@@ -45,7 +45,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
+                <property name="top_attach">5</property>
               </packing>
             </child>
             <child>
@@ -59,7 +59,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">5</property>
+                <property name="top_attach">6</property>
               </packing>
             </child>
             <child>
@@ -75,7 +75,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">10</property>
+                <property name="top_attach">11</property>
                 <property name="width">5</property>
               </packing>
             </child>
@@ -90,7 +90,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">13</property>
+                <property name="top_attach">14</property>
               </packing>
             </child>
             <child>
@@ -106,7 +106,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">15</property>
+                <property name="top_attach">16</property>
                 <property name="width">5</property>
               </packing>
             </child>
@@ -121,7 +121,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">18</property>
+                <property name="top_attach">19</property>
               </packing>
             </child>
             <child>
@@ -135,7 +135,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">19</property>
+                <property name="top_attach">20</property>
               </packing>
             </child>
             <child>
@@ -149,7 +149,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">20</property>
+                <property name="top_attach">21</property>
               </packing>
             </child>
             <child>
@@ -163,7 +163,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">21</property>
+                <property name="top_attach">22</property>
               </packing>
             </child>
             <child>
@@ -192,7 +192,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">12</property>
+                <property name="top_attach">13</property>
                 <property name="width">5</property>
               </packing>
             </child>
@@ -208,7 +208,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">17</property>
+                <property name="top_attach">18</property>
                 <property name="width">5</property>
               </packing>
             </child>
@@ -232,7 +232,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">11</property>
+                <property name="top_attach">12</property>
                 <property name="width">5</property>
               </packing>
             </child>
@@ -244,7 +244,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">16</property>
+                <property name="top_attach">17</property>
                 <property name="width">5</property>
               </packing>
             </child>
@@ -259,7 +259,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">14</property>
+                <property name="top_attach">15</property>
               </packing>
             </child>
             <child>
@@ -273,7 +273,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">6</property>
+                <property name="top_attach">7</property>
               </packing>
             </child>
             <child>
@@ -304,7 +304,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">7</property>
+                <property name="top_attach">8</property>
               </packing>
             </child>
             <child>
@@ -318,7 +318,7 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">8</property>
+                <property name="top_attach">9</property>
               </packing>
             </child>
             <child>
@@ -332,8 +332,34 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">9</property>
+                <property name="top_attach">10</property>
               </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="name">path:vidthumbs.path2</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_markup" translatable="yes">&lt;markup&gt;&lt;span&gt;Directory from which to load surrogate images if a file can't be loaded as an image. Files must be named &lt;i&gt;MD5&lt;/i&gt;.png or &lt;i&gt;MD5&lt;/i&gt;.jpg, with &lt;i&gt;MD5&lt;/i&gt; being the md5sum of the file to load.&lt;/span&gt;&lt;/markup&gt;</property>
+                <property name="label" translatable="yes">Additional Preview Image Path</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
             </child>
             <child>
               <placeholder/>

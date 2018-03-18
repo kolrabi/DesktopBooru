@@ -8,10 +8,12 @@ namespace Booru
 	{
 		private DatabaseCursor<ImageDetails> imageCursor;
 		private readonly BooruImageType type; 
+		private readonly bool asc;
 
-		public ImageReader (BooruImageType type)
+		public ImageReader (BooruImageType type, bool asc)
 		{
 			this.type = type;
+			this.asc = asc;
 		}
 
 		public void Close()
@@ -41,7 +43,7 @@ namespace Booru
 			if (this.imageCursor != null)
 				this.imageCursor.Close ();
 
-			this.imageCursor = BooruApp.BooruApplication.Database.QueryRandomImagesForVoting (this.type);
+			this.imageCursor = BooruApp.BooruApplication.Database.QueryRandomImagesForVoting (this.type, this.asc);
 		}
 	}
 }

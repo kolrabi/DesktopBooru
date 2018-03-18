@@ -113,7 +113,6 @@
     <Compile Include="Sources\Database\Queries\Files\Remove.cs" />
     <Compile Include="Sources\Database\Queries\Files\Add.cs" />
     <Compile Include="Sources\Database\Queries\Files\GetAll.cs" />
-    <Compile Include="Sources\Database\Queries\Files\GetForMD5.cs" />
     <Compile Include="Sources\Database\Queries\Images\Remove.cs" />
     <Compile Include="Sources\Database\Queries\Images\Add.cs" />
     <Compile Include="Sources\Database\Queries\Images\Exists.cs" />
@@ -155,6 +154,11 @@
     <Compile Include="Sources\Widgets\TagsEntryWidget.cs" />
     <Compile Include="Sources\plugin\PluginInterface.cs" />
     <Compile Include="Sources\plugin\PluginLoader.cs" />
+    <Compile Include="Sources\Network\Network.cs" />
+    <Compile Include="Sources\plugin\AllTagFinderPlugins.cs" />
+    <Compile Include="Sources\Database\Queries\Files\GetMD5.cs" />
+    <Compile Include="Sources\Database\Queries\Files\GetPaths.cs" />
+    <Compile Include="Sources\Util\RefCountedDisposable.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\SQL\schema.sql">

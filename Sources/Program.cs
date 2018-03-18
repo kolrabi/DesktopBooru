@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Booru
 {
 	public class BooruApp
 	{
-		public static BooruApp BooruApplication;
+		public static BooruApp BooruApplication  { get; private set; }
 
 		public BooruSettings Settings { get; private set; }
 		public Database Database { get; private set; }
@@ -13,13 +14,12 @@ namespace Booru
 		public BooruEventCenter EventCenter { get; private set; }
 		public BooruLog Log { get; private set; }
 		public TaskRunner TaskRunner { get; private set; }
+		public Network Network { get; private set; }
+		public PluginLoader PluginLoader { get; private set; }
 
+		public string DBFile { get; private set; }
 		public int MainThreadId { get; private set; }
 		public bool IsMainThread { get { return MainThreadId == System.Threading.Thread.CurrentThread.ManagedThreadId; } }
-
-		public string DBFile;
-
-		public PluginLoader PluginLoader;
 
 		public static void Main (string[] args)
 		{
@@ -33,41 +33,44 @@ namespace Booru
 			// general gtk initialization
 			Gtk.Application.Init ();
 
-			MainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+			MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
 			// load styles
 			var provider = new Gtk.CssProvider ();
 			provider.LoadFromData (Resources.LoadResourceString(Resources.ID_STYLES_SCREEN_CSS));
-
 			Gtk.StyleContext.AddProviderForScreen (Gdk.Screen.Default, provider, 600);
 
 			// install handler for glib exceptions
-			GLib.ExceptionManager.UnhandledException += (exargs) => {
-				var ex = exargs.ExceptionObject as Exception;
-				if (ex != null) {
-					Console.WriteLine ("Unhandled " + ex.GetType () + ": " + ex.Message);
-					Console.WriteLine (ex.StackTrace);
-					if (ex.InnerException != null) {
-						Console.WriteLine (ex.InnerException.Message);
-						Console.WriteLine (ex.InnerException.StackTrace);
-					}
-				} else {
-					Console.WriteLine ("Unhandled exception: " + exargs.ExceptionObject);
-				}
-			};
+			GLib.ExceptionManager.UnhandledException += (exargs) => PrintUnhandledException(exargs.ExceptionObject);
 
 			// initialize
 			this.Log = new BooruLog();
 			this.EventCenter = new BooruEventCenter();
 			this.TaskRunner = new TaskRunner ();
 			this.Settings = new BooruSettings ();
+			this.Network = new Network ();
 			this.Database = new Database ();
-
 			this.PluginLoader = new PluginLoader ();
 			this.PluginLoader.LoadPlugins ();
 
 			// create gui
 			this.MainWindow = MainWindow.Create ();
+		}
+
+		private static void PrintUnhandledException(object o)
+		{
+			var ex = o as Exception;
+			if (ex != null) {
+				Console.WriteLine ("Unhandled " + ex.GetType () + ": " + ex.Message);
+				Console.WriteLine (ex.StackTrace);
+				while(ex.InnerException != null) {
+					ex = ex.InnerException;
+					Console.WriteLine ("Inner exception: " + ex.GetType () + ": " + ex.Message);
+					Console.WriteLine (ex.StackTrace);
+				}
+			} else {
+				Console.WriteLine ("Unhandled exception: " + o);
+			}
 		}
 
 		private void Run()
@@ -86,21 +89,13 @@ namespace Booru
 				this.MainWindow.Show ();
 				Gtk.Application.Run ();
 			} catch (Exception ex) {
-				Console.WriteLine ("Global exeption: " + ex.Message);
-				Console.WriteLine (ex.StackTrace);
-				if (ex.InnerException != null) {
-					Console.WriteLine (ex.InnerException.Message);
-					Console.WriteLine (ex.InnerException.StackTrace);
-				}
+				PrintUnhandledException (ex);
 			}
 		}
 
 		public bool Quit()
 		{
-			bool ok = this.EventCenter.Quit ();
-
-			if (ok) {
-
+			if (this.EventCenter.Quit ()) {
 				foreach (var plugin in this.PluginLoader.LoadedPlugins) {
 					plugin.OnUnload ();
 				}
@@ -111,7 +106,6 @@ namespace Booru
 				return false;
 			}
 		}
-
 
 		public void OpenDatabaseFile(string dbFile)
 		{
@@ -130,19 +124,6 @@ namespace Booru
 
 			BooruApp.BooruApplication.Database.CreateDatabase(connection);
 			BooruApp.BooruApplication.Settings.Set ("last_used_db", dbFile);
-		}
-
-		public string DownloadText(string url, IDictionary<string, string> cookies)
-		{
-			var useProxy = BooruApp.BooruApplication.Database.Config.GetBool ("net.proxy.enable");
-			var proxyUrl = BooruApp.BooruApplication.Database.Config.GetString ("net.proxy.url");
-
-			var webClient = new Booru.SocksWebClient(proxyUrl, useProxy);
-			if (cookies != null)
-				foreach (var cookie in cookies)
-					webClient.Cookies [cookie.Key] = cookie.Value;
-
-			return webClient.DownloadString (url);
 		}
 	}
 }

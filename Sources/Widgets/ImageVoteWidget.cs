@@ -37,9 +37,22 @@ namespace Booru {
 		public Image Image {
 			get { return this.image; }
 			set {
+				if (this.image == value)
+					return;
+
+				if (value != null) {
+					Console.WriteLine ("{0} setting image", value.Details.MD5);
+					value.AddRef ();
+				}
+
+				if (this.image != null) {
+					Console.WriteLine ("{0} unsetting image", value.Details.MD5);
+					this.image.Release ();
+				}
+				
 				this.image = value;
-				if (value != null)
-					this.ImageWidget.Image = value;
+
+				this.ImageWidget.Image = value;
 			}
 		}
 			
@@ -91,13 +104,19 @@ namespace Booru {
 		private void on_OpenExternallyButton_clicked(object o, EventArgs args)
 		{
 			if (this.image != null)
-				this.image.ViewExternal ();
+				this.image.ViewExternal (this.ImageWidget.Handle.ToInt32());
 		}
 
 		private void OnFullscreenToggled(bool isFullscreen)
 		{
 			bool showStuff = !isFullscreen;
 			this.ButtonBox.Visible = showStuff;
+		}
+
+		public override void Destroy()
+		{
+			this.Image = null;
+			base.Destroy ();
 		}
 	}
 

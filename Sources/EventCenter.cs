@@ -18,9 +18,6 @@ namespace Booru
 		public event NoArgsEvent DatabaseLoadSucceeded;
 		public event NoArgsEvent DatabaseLoadFailed;
 
-		public event NoArgsEvent RemoteConnected;
-		public event NoArgsEvent RemoteDisconnected;
-
 		public event StringArgEvent ImageSearchRequested;
 
 		public BooruEventCenter ()
@@ -56,18 +53,6 @@ namespace Booru
 						this.DatabaseLoadFailed();
 				}
 			});
-		}
-
-		public void ConnectedRemote()
-		{
-			if (this.RemoteConnected != null)
-				this.RemoteConnected ();
-		}
-
-		public void DisconnectedRemote()
-		{
-			if (this.RemoteDisconnected != null)
-				this.RemoteDisconnected ();
 		}
 
 		public bool Quit()

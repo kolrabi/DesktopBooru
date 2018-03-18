@@ -22,7 +22,8 @@ namespace Booru {
 				this.SetFilename( BooruApp.BooruApplication.Database.Config.GetString (key));
 			};
 
-			this.FocusOutEvent += (o, args) => {
+
+			this.CurrentFolderChanged += (o, args) => {
 				SaveValue ();
 			};
 		}

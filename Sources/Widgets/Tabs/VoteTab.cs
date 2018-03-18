@@ -141,24 +141,23 @@ namespace Booru {
 		}
 
 		// create a task for loading the next image
-		Task LoadNextImage(ImageVoteWidget widget)
+		private Task LoadNextImage(ImageVoteWidget widget)
 		{
 			this.BeginLoading (widget);
 
 			var task = new System.Threading.Tasks.Task(async () => {
-				Image image = null;
-
-				while(widget.IsFading) {
-					System.Threading.Thread.Yield();
-				}
-
 				// get images until it is a valid image
-				while(image == null)
+				Image image = null;
+				while(image == null) {
 					image = await this.ImageLoader.NextImage ();
+				}
+					
+				System.Threading.SpinWait.SpinUntil(() => !widget.IsFading);
 
 				// update image in gui thread
 				Application.Invoke((s,e) => { 
 					widget.Image = image; 
+					image.Release();
 					this.FinishLoading ();
 				});
 			});
@@ -167,7 +166,7 @@ namespace Booru {
 			return task;
 		}
 
-		async void LoadNextImages()
+		private async void LoadNextImages()
 		{
 			this.BeginLoading (this.LeftImage);
 			this.BeginLoading (this.RightImage);

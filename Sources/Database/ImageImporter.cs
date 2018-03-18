@@ -39,7 +39,7 @@ namespace Booru
 		private List<ImageEntry> entries = new List<ImageEntry>();
 		private int nextImportEntry = 0;
 
-		private Thread importThread;
+		private Thread[] importThreads = new Thread[4];
 
 		public ImageImporter ()
 		{
@@ -65,19 +65,23 @@ namespace Booru
 		{
 			this.Abort ();
 
-			var start = new ThreadStart (Import);
-			this.importThread = new Thread (start);
-			this.importThread.Name = "Image Importer";
-			this.importThread.Start ();
+			for (int i = 0; i < this.importThreads.Length; i++) {
+				var start = new ThreadStart (Import);
+				this.importThreads [i] = new Thread (start);
+				this.importThreads [i].Name = string.Format ("Image Importer {0}", i);
+				this.importThreads [i].Start ();
+			}
 		}
 
 		public void Abort()
 		{
-			if (this.importThread != null) {
-				this.importThread.Abort ();
-				this.importThread = null;
-				this.entries.Clear ();
+			for (int i = 0; i < this.importThreads.Length; i++) {
+				if (this.importThreads [i] != null) {
+					this.importThreads [i].Abort ();
+					this.importThreads [i] = null;
+				}
 			}
+			this.entries.Clear ();
 			this.nextImportEntry = 0;
 		}
 
@@ -105,14 +109,16 @@ namespace Booru
 			while (true) {
 				ImageEntry entry = null;
 				lock (this.entries) {
-					if (this.entries.Count > this.nextImportEntry)
+					if (this.entries.Count > this.nextImportEntry) {
 						entry = this.entries [this.nextImportEntry];
+						if (entry != null) 
+							this.nextImportEntry++;
+					}
 				}
 				if (entry == null) {
 					Thread.Sleep (1000);
 				} else {
 					this.ImportEntry (entry);
-					this.nextImportEntry++;
 				}
 			}
 		}
@@ -172,17 +178,11 @@ namespace Booru
 
 			bool askedServer = false;
 
-			foreach (var plugin in BooruApp.BooruApplication.PluginLoader.LoadedPlugins) {
-				var tagFinderIface = plugin as TagFinderPluginInterface;
-				if (tagFinderIface == null)
-					continue;
+			entry.Status = "Asking plugins...";
+			CallUpdate (entry);
 
-				entry.Status = "Asking "+plugin.Name+"...";
-				CallUpdate (entry);
-
-				if (tagFinderIface.FindTagsForFile (entry.path, entry.MD5, tagMeExpired, tags))
-					askedServer = true;
-			}
+			if (BooruApp.BooruApplication.PluginLoader.TagFinderPlugins.FindTagsForFile (entry.path, entry.MD5, tagMeExpired, tags))
+				askedServer = true;
 			CallUpdate (entry);
 
 			if (details == null) {
@@ -198,8 +198,16 @@ namespace Booru
 			if (askedServer || details == null || details.Updated.Ticks == 0) {
 				entry.Status = (details == null)?"Adding to DB":"Updating";
 				CallUpdate (entry);
-				if (details == null || askedServer)
-					BooruApp.BooruApplication.Database.AddImageIfNew (entry.path, entry.MD5, entry.TagString, fileType);
+				if (details == null || askedServer) {
+					int tries = 1;
+					while (!BooruApp.BooruApplication.Database.AddImageIfNew (entry.path, entry.MD5, entry.TagString, fileType)) {
+						BooruApp.BooruApplication.Log.Log(BooruLog.Category.Files, BooruLog.Severity.Error, "Database error: " + entry.path);
+						entry.Status = string.Format("DB Error. Retrying... {0}", tries);
+						CallUpdate (entry);
+						tries++;
+						Thread.Sleep (1000);
+					}
+				}
 				Queries.Images.UpdateUpdated.Execute (entry.MD5);
 				entry.Status = (details == null)?"Added":"Updated";
 				CallUpdate (entry);

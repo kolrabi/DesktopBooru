@@ -22,11 +22,11 @@ namespace Booru {
 		ImportTab (Builder builder, IntPtr handle) : base (builder, handle)
 		{
 			//this.AddColumnPixbuf ("Preview", 0);
-			this.AddColumnText ("Path", 1);
+			this.AddColumnText ("Path", 1, false, true);
 			this.AddColumnText ("MD5", 2);
 			this.AddColumnText ("Status", 3);
 			this.AddColumnText ("LastUpdated", 5);
-			this.AddColumnText ("Tags", 4);
+			this.AddColumnText ("Tags", 4, true);
 
 			this.ImageEntryView.Model = this.entryStore;
 
@@ -66,10 +66,22 @@ namespace Booru {
 			ImageEntryView.AppendColumn (column);
 		}
 
-		void AddColumnText(string name, int index) 
+		void AddColumnText(string name, int index, bool wrap = false, bool ellipsis = false) 
 		{
-			CellRenderer textRenderer = new CellRendererText ();
+			CellRendererText textRenderer = new CellRendererText ();
+
+			if (wrap) {
+				textRenderer.WrapWidth = 400;
+				textRenderer.WrapMode = Pango.WrapMode.Word;
+			}
+			if (ellipsis) {
+				textRenderer.Ellipsize = Pango.EllipsizeMode.Middle;
+			}
+
+			textRenderer.Alignment = Pango.Alignment.Left;
+
 			TreeViewColumn column = new TreeViewColumn (name, textRenderer);
+			column.Resizable = true;
 			column.AddAttribute (textRenderer, "text", index);
 			ImageEntryView.AppendColumn (column);
 		}
@@ -104,15 +116,19 @@ namespace Booru {
 			FileChooserDialog dlg = new FileChooserDialog ("Choose Image Folder", BooruApp.BooruApplication.MainWindow, FileChooserAction.SelectFolder);
 			dlg.AddButton ("Open", Gtk.ResponseType.Ok);
 			dlg.AddButton ("Cancel", Gtk.ResponseType.Cancel);
+			dlg.SelectMultiple = true;
 
 			if (!string.IsNullOrEmpty (lastPath))
 				dlg.SetCurrentFolder (lastPath);
 
 			if (dlg.Run() == (int)Gtk.ResponseType.Ok) {
 				BooruApp.BooruApplication.Database.SetConfig ("import.mru", dlg.CurrentFolder);
-				foreach (var path in dlg.Filenames) {
-					this.AddFolder (path);
-				}
+
+				new System.Threading.Thread(new System.Threading.ThreadStart(() => {
+						foreach (var path in dlg.Filenames) {
+							this.AddFolder (path);
+						}
+				})).Start();
 			}
 
 			dlg.Destroy ();
@@ -139,11 +155,11 @@ namespace Booru {
 					if (entries.ContainsKey (entry)) {
 						var iter = entries[entry];
 						lock(entryStore)
-							entryStore.SetValues(iter, entry.Preview, System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
+							entryStore.SetValues(iter, entry.Preview, System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(entry.path)) + "/" + System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
 						this.ImageEntryView.ScrollToCell(this.ImageEntryView.Model.GetPath(iter), this.ImageEntryView.Columns[0], false, 0,0);
 					} else {
 						lock(entryStore) {
-							var iter = entryStore.AppendValues (null, System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
+							var iter = entryStore.AppendValues (null, System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(entry.path)) + "/" + System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
 							entries [entry] = iter;
 						}
 					}

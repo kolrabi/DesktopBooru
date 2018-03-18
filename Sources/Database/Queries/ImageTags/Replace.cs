@@ -41,12 +41,14 @@ namespace Booru.Queries.ImageTags
 
 		public static void Execute(long oldTagId, IList<long> newTagIds)
 		{
-			var transaction = BooruApp.BooruApplication.Database.Connection.BeginTransaction ();
+			lock (BooruApp.BooruApplication.Database.Connection) {
+				var transaction = BooruApp.BooruApplication.Database.Connection.BeginTransaction ();
 
-			foreach (long newTagId in newTagIds)
-				new Replace(oldTagId, newTagId).ExecuteNonQuery ();
+				foreach (long newTagId in newTagIds)
+					new Replace (oldTagId, newTagId).ExecuteNonQuery ();
 	
-			transaction.Commit ();
+				transaction.Commit ();
+			}
 		}
 	}
 }

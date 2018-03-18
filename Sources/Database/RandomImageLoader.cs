@@ -9,8 +9,9 @@ namespace Booru
 	public class RandomImageLoader
 	{
 		private ConcurrentQueue<Task<Image>> taskQueue = new ConcurrentQueue<Task<Image>>();
-		private ImageReader reader;
+		private ImageReader[] readers = new ImageReader[2];
 		private BooruImageType type = BooruImageType.Image;
+		private int idx = 0;
 	
 		public RandomImageLoader ()
 		{
@@ -22,16 +23,17 @@ namespace Booru
 			this.SetFilter (this.type);
 		}
 
+		private Random rnd = new Random();
+
 		private Task<Image> LoadImage()
 		{
 			var loadingTask = new Task<Image> (() => {
 				ImageDetails data = null;
 				while (data == null) {
-					lock(this.reader) {
-						data = this.reader.GetNextImage();
+					lock(this.readers) {
+						data = this.readers[rnd.Next()%2].GetNextImage();
+						//this.idx = 1-this.idx;
 					}
-					if (data == null)
-						System.Threading.Thread.Sleep(1000);
 				}
 				return Image.GetImage(data);
 			});
@@ -58,10 +60,16 @@ namespace Booru
 					taskQueue.TryDequeue (out task);	
 				}
 
-				if (this.reader != null)
-					this.reader.Close ();
+				lock (this.readers) {
+					for (int i=0; i<2; i++)
+					{
+						if (this.readers [i] != null)
+							this.readers [i].Close ();
 
-				this.reader = new ImageReader (type);
+						this.readers[i] = new ImageReader (type, i == 0);
+					}
+				}
+
 				var queue = new ConcurrentQueue<Task<Image>>();
 				for (int i = 0; i < 2; i++)
 					queue.Enqueue (LoadImage ());

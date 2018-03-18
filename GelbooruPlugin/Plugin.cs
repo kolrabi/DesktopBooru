@@ -50,7 +50,7 @@ namespace GelbooruPlugin
 					cookies ["pass_hash"] = gelbooruPass;
 
 				var url = string.Format(gelbooruURL, md5);
-				if (!this.ParseData (App.DownloadText(url, cookies), tags))
+				if (!this.ParseData (App.Network.DownloadText(url, cookies), tags))
 					return false;
 			} catch (Exception ex) {
 				App.Log.Log(Booru.BooruLog.Category.Network, Booru.BooruLog.Severity.Error, "Exception caught while asking gelbooru: " + ex.Message + " " + ex.InnerException == null ? "no inner exception" : ex.InnerException.Message);

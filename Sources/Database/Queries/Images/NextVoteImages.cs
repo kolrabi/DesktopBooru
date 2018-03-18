@@ -6,7 +6,7 @@ namespace Booru.Queries.Images
 {
 	public class NextVoteImages : DatabaseQuery
 	{
-		private NextVoteImages (string typeString) : base(
+		private NextVoteImages (string typeString, bool asc) : base(
 			"  SELECT files.md5sum, " +
 			"         files.path, " +
 			"         images.elo," +
@@ -23,20 +23,20 @@ namespace Booru.Queries.Images
 			"       AND (@type IS NULL OR @type = images.type ) " +
 			"GROUP BY images.md5sum " +
 			"ORDER BY " +
-			"         (images.wins+images.losses), RANDOM() LIMIT 20" 
+			"         (images.wins+images.losses) "+(asc?"":"DESC")+", RANDOM() LIMIT 20" 
 		)
 		{
 			this.AddParameter (DbType.AnsiString, "type", typeString);
 			this.Prepare ();
 		}
 
-		public static DatabaseCursor<ImageDetails> Execute(BooruImageType type)
+		public static DatabaseCursor<ImageDetails> Execute(BooruImageType type, bool asc)
 		{
 			string t = null;
 			if (type != BooruImageType.Unknown)
 				t = type.ToString ().Substring(0,1);
 
-			var dbReader = new NextVoteImages (t).ExecuteReader ();
+			var dbReader = new NextVoteImages (t, true).ExecuteReader ();
 
 			return new DatabaseCursor<ImageDetails> (new DatabaseReader (dbReader));
 		}

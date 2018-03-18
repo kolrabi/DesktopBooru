@@ -7,7 +7,7 @@ using System.IO.Compression;
 
 namespace Booru
 {
-	public class Image : IDisposable
+	public class Image : RefCountedDisposable
 	{
 		public readonly ImageDetails Details;
 		public List<string> Tags;
@@ -27,30 +27,41 @@ namespace Booru
 		public int MaxImage { get { return this.maxImage; } }
 		public string SubImageName { get; private set; }
 
-		private static IDictionary<string, WeakReference<Image>> imageCache = new Dictionary<string, WeakReference<Image>>();
+		private static IDictionary<string, Image> imageCache = new Dictionary<string, Image>();
+
 		public static Image GetImage(ImageDetails details)
 		{
 			lock (imageCache) {
-				Image image;
 				if (imageCache.ContainsKey (details.MD5)) {
-					if (imageCache [details.MD5].TryGetTarget (out image))
-						return image;
+					Console.WriteLine ("{0} from cache", details.MD5);
+					return imageCache [details.MD5];
 				}
-				image = new Image (details);
-				imageCache [details.MD5] = new WeakReference<Image> (image);
+				Image image = new Image (details, details);
+				imageCache [details.MD5] = image;
+				Console.WriteLine ("{0} to cache", details.MD5);
+				Console.WriteLine ("{0} images in cache", imageCache.Count);
 				return image;
 			}
 		}
 
-		private Image (ImageDetails details)
+		private Image (ImageDetails details, ImageDetails details2)
 		{
 			this.Details = details;
 			this.SubImageName = "";
 			this.ReloadTags ();
 		}
-
-		public void Dispose()
+			
+		public override void Dispose()
 		{
+			System.Diagnostics.Debug.Assert (this.IsDisposed);
+
+			lock (imageCache) {
+				if (imageCache.ContainsKey (Details.MD5)) {
+					imageCache.Remove (Details.MD5);
+				}
+				Console.WriteLine ("{0} images left in cache", imageCache.Count);
+			}
+				
 			if (this.cachedAnimation != null)
 				this.cachedAnimation.Dispose ();
 			this.cachedAnimation = null;
@@ -73,19 +84,24 @@ namespace Booru
 				return;
 
 			this.maxImage = -1;
-			this.zipFile = new ZipArchive(File.OpenRead(this.Details.Path));
+			this.subImage = -1;
 			this.zipEntries.Clear();
 
-			foreach(var entry in this.zipFile.Entries) {
-				this.zipEntries.Add(entry);
-				this.maxImage++;
-			}
-			this.zipEntries.Sort((a,b) => {
-				return a.Name.CompareNatural(b.Name);
-			});
+			try {
+				this.zipFile = new ZipArchive(File.OpenRead(this.Details.Path));
+				foreach(var entry in this.zipFile.Entries) {
+					this.zipEntries.Add(entry);
+					this.maxImage++;
+				}
+				this.zipEntries.Sort((a,b) => {
+					return a.Name.CompareNatural(b.Name);
+				});
 
-			if (this.maxImage != -1)
-				this.subImage = this.subImage % (1+this.maxImage);
+				if (this.maxImage != -1)
+					this.subImage = this.subImage % (1+this.maxImage);
+			} catch(Exception ex) {
+				this.zipFile = null;
+			}
 		}
 
 		void SelectBaseImage()
@@ -105,13 +121,15 @@ namespace Booru
 
 		void SelectSubImage()
 		{
-			if (this.subImage < 0 || this.subImage > this.maxImage) {
+			if (subImage < 0 || subImage > this.maxImage) {
 				this.SelectBaseImage ();
 				return;
 			}
 
 			try {
+				int subImage = this.subImage;
 				this.OpenZip();
+				this.subImage = subImage;
 			} catch(Exception ex) {
 				Console.WriteLine (ex.Message);
 				this.SelectBaseImage ();
@@ -347,7 +365,7 @@ namespace Booru
 		}
 		#endregion
 
-		public void ViewExternal()
+		public void ViewExternal(int windowId)
 		{
 			string viewer = "";
 			switch (this.Details.type) {
@@ -358,7 +376,7 @@ namespace Booru
 			}
 
 			string[] viewerParts = BooruApp.BooruApplication.Database.Config.GetString (viewer).Split (" ".ToCharArray(), 2);
-			System.Diagnostics.Process.Start(viewerParts[0], string.Format(viewerParts[1], "\"" + this.Details.Path + "\""));
+			System.Diagnostics.Process.Start(viewerParts[0], string.Format(viewerParts[1], "\"" + this.Details.Path + "\"", windowId));
 		}
 	}
 }

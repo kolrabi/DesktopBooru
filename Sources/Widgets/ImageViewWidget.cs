@@ -23,9 +23,18 @@ namespace Booru
 				if (this.image == value)
 					return;
 
+				if (value != null) {
+					Console.WriteLine ("{0} setting image view widget", value.Details.MD5);
+					value.AddRef ();
+					value.SubImage = -1;
+				}
+
+				if (this.image != null) {
+					Console.WriteLine ("{0} unsetting image view widget", this.image.Details.MD5);
+					this.image.Release ();
+				}
+
 				this.image = value;
-				if (this.image != null)
-					this.image.SubImage = -1;
 				this.animIter = null;
 				this.UpdateImage (true);
 				this.QueueFrame ();
@@ -44,7 +53,7 @@ namespace Booru
 		public ImageViewWidget ()
 		{
 			// frame update
-			GLib.Timeout.Add (33, () => {
+			GLib.Timeout.Add (10, () => {
 				if (hasFrameBeenQueued)
 					return true;
 				
@@ -55,8 +64,8 @@ namespace Booru
 						this.fadeAlpha = this.TargetAlpha;
 				}
 
-				if (this.image != null && this.image.Anim != null &&  !hasFrameBeenQueued && (!IsPaused || wasFading)) {
-					this.UpdateImage(this.IsFading);
+				if (this.image != null && this.image.Anim != null && (!IsPaused || wasFading || !this.image.Anim.IsStaticImage)) {
+					this.UpdateImage(this.IsFading || !this.image.Anim.IsStaticImage);
 				}
 
 				if (wasFading || this.IsFading)
@@ -68,6 +77,12 @@ namespace Booru
 			this.Show ();
 		}
 
+		public override void Destroy()
+		{
+			this.Image = null;
+			base.Destroy ();
+		}
+
 		private bool Resize(ref int imageWidth, ref int imageHeight)
 		{
 			if (this.areaSize.X <= 2 || this.areaSize.Y <= 2)
@@ -75,6 +90,9 @@ namespace Booru
 
 			return true;
 		}
+
+		Gdk.Pixbuf unscaledPixBuf;
+
 
 		private void UpdateImage(bool forceUpdate)
 		{
@@ -90,6 +108,7 @@ namespace Booru
 				return;
 			
 			Gdk.Pixbuf unscaledPixBuf = null;
+			bool newAnimFrame = false;
 
 			if (animation.IsStaticImage) {
 				if (forceUpdate)
@@ -100,26 +119,30 @@ namespace Booru
 				}
 				if (animIter != null && animIter.Advance (IntPtr.Zero)) {
 					unscaledPixBuf = animIter.Pixbuf;
+					newAnimFrame = true;
 				}
 			}
-
-			if (unscaledPixBuf == null)
-				return;
-
+				
 			var imageSize = new Cairo.PointD (animation.Width, animation.Height);
-
 			if (imageSize.X <= 2 || imageSize.Y <= 2)
 				return;
-
+			
 			// scale preserving aspect ratio
 			var scale = Math.Min (this.areaSize.X / imageSize.X, this.areaSize.Y / imageSize.Y);
 			var scaledImageSize = new Cairo.PointD (imageSize.X * scale, imageSize.Y * scale);
 
-			if (this.ScaledPixbuf != null)
-				this.ScaledPixbuf.Dispose ();
-			
-			this.ScaledPixbuf = unscaledPixBuf.ScaleSimple ((int)scaledImageSize.X, (int)scaledImageSize.Y, Gdk.InterpType.Hyper);
-			this.scaledImageSize = scaledImageSize;
+			if (unscaledPixBuf == null)
+				return;
+
+			if (newAnimFrame || unscaledPixBuf != this.unscaledPixBuf || scaledImageSize.X != this.scaledImageSize.X || scaledImageSize.Y != this.scaledImageSize.Y) {
+				if (this.ScaledPixbuf != null)
+					this.ScaledPixbuf.Dispose ();
+
+				Gdk.Pixbuf scaledPixBuf = unscaledPixBuf.ScaleSimple ((int)scaledImageSize.X, (int)scaledImageSize.Y, Gdk.InterpType.Hyper);
+				this.ScaledPixbuf = scaledPixBuf;
+				this.scaledImageSize = scaledImageSize;
+				this.unscaledPixBuf = unscaledPixBuf;
+			}
 
 			// where to draw the pixbuf
 			this.TargetRect = new Cairo.Rectangle (
@@ -158,7 +181,7 @@ namespace Booru
 				cr.Fill ();
 			}
 
-			cr.SelectFontFace ("Noto Sans", FontSlant.Normal, FontWeight.Normal);
+			cr.SelectFontFace ("Noto Mono", FontSlant.Normal, FontWeight.Normal);
 			cr.SetFontSize (12.0);
 			cr.LineWidth = 3.5;
 
@@ -173,7 +196,7 @@ namespace Booru
 			var white = new Cairo.Color (1, 1, 1, this.fadeAlpha);
 			var black = new Cairo.Color (0, 0, 0, this.fadeAlpha);
 
-			cr.DrawStringAt (4, 4 + cr.FontExtents.Height, System.IO.Path.GetFileName (this.image.Details.Path), black, white);
+			// cr.DrawStringAt (4, 4 + cr.FontExtents.Height, System.IO.Path.GetFileName (this.image.Details.Path), black, white);
 
 			if (this.image.MaxImage > -1) {
 				string text;
@@ -208,9 +231,6 @@ namespace Booru
 
 		private void QueueFrame()
 		{
-			if (this.animIter != null) {
-				var data = this.animIter.Data;
-			}
 			this.hasFrameBeenQueued = true;
 			this.QueueDraw();
 		}
