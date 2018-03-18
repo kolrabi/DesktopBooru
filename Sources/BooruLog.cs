@@ -38,19 +38,36 @@ namespace Booru
 
 		}
 
+		private Gdk.Pixbuf InfoPixBuf = null;
+		private Gdk.Pixbuf WarningPixBuf = null;
+		private Gdk.Pixbuf ErrorPixBuf = null;
+
 		public BooruLog ()
 		{
 			Model = new Gtk.ListStore (typeof(Gdk.Pixbuf), typeof(string), typeof(string), typeof(string));
 
-			Gtk.StockItem item;
-			if (Gtk.StockManager.LookupItem ("gtk-dialog-warning", out item)) {
-			}
+			Gtk.StyleContext stylecontext = new Gtk.StyleContext ();
 
+			InfoPixBuf = Gtk.IconFactory.LookupDefault ("gtk-dialog-info").RenderIconPixbuf (stylecontext, Gtk.IconSize.Menu);
+			WarningPixBuf = Gtk.IconFactory.LookupDefault ("gtk-dialog-warning").RenderIconPixbuf (stylecontext, Gtk.IconSize.Menu);
+			ErrorPixBuf = Gtk.IconFactory.LookupDefault ("gtk-dialog-error").RenderIconPixbuf (stylecontext, Gtk.IconSize.Menu);
 		}
 
 		public void Log(Category category, Severity severity, string message)
 		{
-			Model.AppendValues (null, DateTime.Now.ToString(), category.ToString (), message);
+			lock (Model) {
+				switch (severity) {
+				case Severity.Info:
+					Model.AppendValues (InfoPixBuf, DateTime.Now.ToString (), category.ToString (), message);
+					break;
+				case Severity.Warning:
+					Model.AppendValues (WarningPixBuf, DateTime.Now.ToString (), category.ToString (), message);
+					break;
+				case Severity.Error:
+					Model.AppendValues (ErrorPixBuf, DateTime.Now.ToString (), category.ToString (), message);
+					break;
+				}
+			}
 		}
 	}
 
