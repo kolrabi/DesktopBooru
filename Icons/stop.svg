@@ -14,7 +14,7 @@
    viewBox="0 0 6.3499999 6.3500002"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.1 r15371"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="stop.svg"
    inkscape:export-filename="/home/kolrabi/projects/DesktopBooru/Resources/GUI/stop.png"
    inkscape:export-xdpi="96"
@@ -29,18 +29,20 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="22.4"
-     inkscape:cx="11.9113"
-     inkscape:cy="10.566675"
+     inkscape:cx="11.621121"
+     inkscape:cy="14.138104"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
      units="px"
      inkscape:window-width="1680"
-     inkscape:window-height="991"
+     inkscape:window-height="996"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:snap-nodes="false">
+     inkscape:snap-nodes="false"
+     inkscape:snap-object-midpoints="false"
+     inkscape:snap-global="true">
     <inkscape:grid
        type="xygrid"
        id="grid3688"
@@ -63,19 +65,13 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-290.64998)">
-    <path
-       sodipodi:nodetypes="ccccccc"
-       inkscape:connector-curvature="0"
-       id="path6631"
-       d="m 5.3385758,295.98608 -1.977288,0.0189 -1.9772878,0.007 v -1.9512 -2.02208 l 3.9734747,0.007 z"
-       inkscape:transform-center-x="-0.52916664"
-       style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <path
-       style="fill:#404040;fill-opacity:1;stroke:#404040;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       inkscape:transform-center-x="-0.52916664"
-       d="m 5.1381137,295.78573 -1.977288,0.0189 -1.9772878,0.007 0,-1.9512 v -2.02208 l 3.9734747,0.007 z"
-       id="path3709"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccccc" />
+    <rect
+       style="fill:#404040;fill-opacity:1;stroke-width:1.88999999;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect4786"
+       width="4.2404203"
+       height="4.2286086"
+       x="1.0630578"
+       y="291.70831"
+       rx="0.40000001" />
   </g>
 </svg>
