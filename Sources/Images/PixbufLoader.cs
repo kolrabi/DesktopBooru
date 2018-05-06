@@ -12,11 +12,14 @@ namespace Booru
 		/// <param name="path">Path.</param>
 		private static Gdk.PixbufAnimation LoadPixbufAnimationFromImageFile(string path)
 		{
+			if (!System.IO.File.Exists (path))
+				return null;
+			
 			try {
 				Gdk.PixbufAnimation animation = new Gdk.PixbufAnimation (path);
 				return animation;
 			} catch(Exception ex) {
-				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Image, BooruLog.Severity.Warning, "Unable to load " + path + " as an image! "+ex.Message);
+				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Image, ex, "Caught exception trying to load " + path + " as an image");
 				return null;
 			}
 		}
@@ -30,20 +33,21 @@ namespace Booru
 		/// <param name="md5">Md5.</param>
 		public static Gdk.PixbufAnimation LoadPixbufAnimationForImage(string path, string md5)
 		{
-			var animation = PixbufLoader.LoadPixbufAnimationFromImageFile (path);
+			Gdk.PixbufAnimation animation = null;
+
 			var configVidthumbsPath = BooruApp.BooruApplication.Database.Config.GetString ("vidthumbs.path");
 			if (!string.IsNullOrEmpty (configVidthumbsPath)) {
 				animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath + "/" + md5 + ".jpg");
 				animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath + "/" + md5 + ".png");
 			}
-			if (animation == null) {
-				var configVidthumbsPath2 = BooruApp.BooruApplication.Database.Config.GetString ("vidthumbs.path2");
-				if (!string.IsNullOrEmpty (configVidthumbsPath2)) {
-					animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath2 + "/" + md5 + ".jpg");
-					animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath2 + "/" + md5 + ".png");
-				}
+
+			var configVidthumbsPath2 = BooruApp.BooruApplication.Database.Config.GetString ("vidthumbs.path2");
+			if (!string.IsNullOrEmpty (configVidthumbsPath2)) {
+				animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath2 + "/" + md5 + ".jpg");
+				animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (configVidthumbsPath2 + "/" + md5 + ".png");
 			}
 
+			animation = animation ?? PixbufLoader.LoadPixbufAnimationFromImageFile (path);
 			animation = animation ?? new Gdk.PixbufAnimation (null, Resources.ID_PIXBUFS_NOPREVIEW);
 
 			return animation;		

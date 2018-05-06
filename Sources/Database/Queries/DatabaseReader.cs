@@ -25,9 +25,7 @@ namespace Booru
 				if (!this.readerColumns.ContainsKey (name))
 					return null;
 
-				object val = this.reader.GetValue (this.readerColumns [name]);
-				//Console.WriteLine(name+": "+val.GetType().Name);
-				return val;
+				return this.reader.GetValue (this.readerColumns [name]);
 			}
 		}
 

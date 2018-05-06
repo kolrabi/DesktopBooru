@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Gtk;
 using Cairo;
 using System.Collections.Generic;
@@ -11,8 +12,8 @@ namespace Booru {
 		[UI] Gtk.TreeView ImageEntryView;
 
 		private ImageImporter importer;
-		private IDictionary<ImageImporter.ImageEntry, TreeIter> entries = new Dictionary<ImageImporter.ImageEntry, TreeIter>();
-		private Gtk.ListStore entryStore = new Gtk.ListStore (typeof(Gdk.Pixbuf), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string));
+		private IDictionary<ImageImporter.ImageEntry, Gtk.TreeRowReference> entries = new Dictionary<ImageImporter.ImageEntry, Gtk.TreeRowReference>();
+		private Gtk.ListStore entryStore = new Gtk.ListStore (typeof(Gdk.Pixbuf), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string));
 
 		public static ImportTab Create ()
 		{
@@ -26,6 +27,7 @@ namespace Booru {
 			this.AddColumnText ("MD5", 2);
 			this.AddColumnText ("Status", 3);
 			this.AddColumnText ("LastUpdated", 5);
+			this.AddColumnText ("Sites", 6);
 			this.AddColumnText ("Tags", 4, true);
 
 			this.ImageEntryView.Model = this.entryStore;
@@ -38,6 +40,8 @@ namespace Booru {
 			BooruApp.BooruApplication.EventCenter.DatabaseLoadSucceeded += this.OnDatabaseLoaded;
 
 			BooruApp.BooruApplication.EventCenter.WillQuit += OnWillQuit;
+
+			GLib.Timeout.Add(100, UpdateScrolling);
 		}
 
 		void OnDatabaseLoaded()
@@ -69,11 +73,6 @@ namespace Booru {
 		void AddColumnText(string name, int index, bool wrap = false, bool ellipsis = false) 
 		{
 			CellRendererText textRenderer = new CellRendererText ();
-
-			if (wrap) {
-				textRenderer.WrapWidth = 400;
-				textRenderer.WrapMode = Pango.WrapMode.Word;
-			}
 			if (ellipsis) {
 				textRenderer.Ellipsize = Pango.EllipsizeMode.Middle;
 			}
@@ -123,12 +122,11 @@ namespace Booru {
 
 			if (dlg.Run() == (int)Gtk.ResponseType.Ok) {
 				BooruApp.BooruApplication.Database.SetConfig ("import.mru", dlg.CurrentFolder);
-
-				new System.Threading.Thread(new System.Threading.ThreadStart(() => {
-						foreach (var path in dlg.Filenames) {
-							this.AddFolder (path);
-						}
-				})).Start();
+				BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+					foreach (var path in dlg.Filenames) {
+						this.AddFolder (path);
+					}
+				});
 			}
 
 			dlg.Destroy ();
@@ -148,20 +146,69 @@ namespace Booru {
 			}
 		}
 
+		bool UpdateScrolling()
+		{
+			if (this.scrollToPath != null && this.scrollToPath != lastScrollToPath) {
+				if (lastScrollToPath == null || this.scrollToPath.Indices [0] > this.lastScrollToPath.Indices [0]) {
+					this.ImageEntryView.ScrollToCell (this.scrollToPath, this.ImageEntryView.Columns [0], false, 0, 0);
+					this.lastScrollToPath = scrollToPath;
+				}
+			}
+			return true;
+		}
+
+		Gtk.TreePath lastScrollToPath = null;
+		Gtk.TreePath scrollToPath = null;
+
 		void HandleUpdateEntry (ImageImporter.ImageEntry entry)
 		{
-			Gtk.Application.Invoke ((o, e) => {
+			var tagString = entry.TagString;
+			List<String> tags = new List<string>(tagString.Split(" ".ToCharArray()));
+			List<String> siteTags = tags.FindAll((s) => s.StartsWith("known_on_") || s.StartsWith("not_on_"));
+			tags.RemoveAll((s) => siteTags.Contains(s));
+
+			siteTags.RemoveAll((s) => s.StartsWith("not_on_"));
+			for (int i=0; i<siteTags.Count; i++) {
+				siteTags[i] = siteTags[i].Replace("known_on_", "");
+			}
+
+			string sites = string.Join(" ", siteTags);
+			tagString = string.Join(" ", tags);
+
+			string entryPath = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(entry.path)) + "/" + System.IO.Path.GetFileName(entry.path);
+
+			//Gtk.Application.Invoke ((o,a) => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=> {
 				lock (entries) {
 					if (entries.ContainsKey (entry)) {
-						var iter = entries[entry];
-						lock(entryStore)
-							entryStore.SetValues(iter, entry.Preview, System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(entry.path)) + "/" + System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
-						this.ImageEntryView.ScrollToCell(this.ImageEntryView.Model.GetPath(iter), this.ImageEntryView.Columns[0], false, 0,0);
-					} else {
-						lock(entryStore) {
-							var iter = entryStore.AppendValues (null, System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(entry.path)) + "/" + System.IO.Path.GetFileName(entry.path), entry.MD5, entry.Status, entry.TagString, entry.LastUpdated);
-							entries [entry] = iter;
+						var rowRef = entries[entry];
+						Gtk.TreeIter iter;
+						if (rowRef.Model.GetIter(out iter, entries[entry].Path)) {
+							entryStore.SetValues(iter, 
+								entry.Preview, 
+								entryPath,
+								entry.MD5, 
+								entry.Status, 
+								tagString, 
+								entry.LastUpdated, 
+								sites
+							);
+							scrollToPath = this.ImageEntryView.Model.GetPath (iter);
+						} else {
+							BooruApp.BooruApplication.Log.Log(BooruLog.Category.Application, BooruLog.Severity.Warning, "Could not update import entry "+entry.MD5+", row reference was invalid");
 						}
+						scrollToPath = this.ImageEntryView.Model.GetPath (iter);
+					} else {
+						var iter = entryStore.AppendValues (
+							entry.Preview, 
+							entryPath, 
+							entry.MD5, 
+							entry.Status, 
+							tagString, 
+							entry.LastUpdated, 
+							sites
+						);
+						entries [entry] = new Gtk.TreeRowReference(entryStore, entryStore.GetPath(iter));
 					}
 				}
 			});

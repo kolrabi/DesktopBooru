@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.IO;
-using System.IO.Compression;
 
 namespace Booru
 {
@@ -21,6 +19,7 @@ namespace Booru
 		public double TotalTagScore { get; private set; }
 		public double AvgTagScore { get; private set; }
 
+		FileArchive archive = null;
 		private int subImage = -1;
 		public int SubImage { get { return subImage; } set { subImage = value; SelectSubImage (); } }
 		private int maxImage = -1;
@@ -33,13 +32,10 @@ namespace Booru
 		{
 			lock (imageCache) {
 				if (imageCache.ContainsKey (details.MD5)) {
-					Console.WriteLine ("{0} from cache", details.MD5);
 					return imageCache [details.MD5];
 				}
 				Image image = new Image (details, details);
 				imageCache [details.MD5] = image;
-				Console.WriteLine ("{0} to cache", details.MD5);
-				Console.WriteLine ("{0} images in cache", imageCache.Count);
 				return image;
 			}
 		}
@@ -59,7 +55,7 @@ namespace Booru
 				if (imageCache.ContainsKey (Details.MD5)) {
 					imageCache.Remove (Details.MD5);
 				}
-				Console.WriteLine ("{0} images left in cache", imageCache.Count);
+				//Console.WriteLine ("{0} images left in cache", imageCache.Count);
 			}
 				
 			if (this.cachedAnimation != null)
@@ -70,40 +66,37 @@ namespace Booru
 				this.cachedThumbnail.Dispose ();
 			this.cachedThumbnail = null;
 
-			if (this.zipFile != null)
-				this.zipFile.Dispose ();
-			this.zipFile = null;
+			if (this.archive != null)
+				this.archive.Dispose ();
+			this.archive = null;
 		}
 
-		private ZipArchive zipFile;
-		private List<ZipArchiveEntry> zipEntries = new List<ZipArchiveEntry> ();
-
-		private void OpenZip()
+		void OpenArchive()
 		{
-			if (this.zipFile != null)
+			if (this.archive != null)
 				return;
+			
+			var file = File.OpenRead (this.Details.Path);
+			byte[] magic = new byte[16];
+			file.Read (magic, 0, 16);
+			file.Seek (0, SeekOrigin.Begin);
 
 			this.maxImage = -1;
 			this.subImage = -1;
-			this.zipEntries.Clear();
 
-			try {
-				this.zipFile = new ZipArchive(File.OpenRead(this.Details.Path));
-				foreach(var entry in this.zipFile.Entries) {
-					this.zipEntries.Add(entry);
-					this.maxImage++;
-				}
-				this.zipEntries.Sort((a,b) => {
-					return a.Name.CompareNatural(b.Name);
-				});
+			if (magic[0] == 0x50 && magic[1] == 0x4b && magic[2] == 0x03 && magic[3] == 0x04) {
+				// zip
+				this.archive = new ZipArchive(file);
+			} else if (magic[0] == 0x52 && magic[1] == 0x61 && magic[2] == 0x72 && magic[3] == 0x21) {
+				// rar
+				// TODO: this.OpenRar(file);
+			}
 
-				if (this.maxImage != -1)
-					this.subImage = this.subImage % (1+this.maxImage);
-			} catch(Exception ex) {
-				this.zipFile = null;
+			if (this.archive != null) {
+				this.maxImage = archive.GetEntryCount () - 1;
 			}
 		}
-
+			
 		void SelectBaseImage()
 		{
 			this.subImage = -1;
@@ -112,11 +105,6 @@ namespace Booru
 				this.cachedAnimation.Dispose ();
 			this.cachedAnimation = null;
 			this.CacheAnimation ();
-
-			if (this.zipFile != null)
-				this.zipFile.Dispose ();
-			this.zipFile = null;
-			this.zipEntries.Clear ();
 		}
 
 		void SelectSubImage()
@@ -128,16 +116,16 @@ namespace Booru
 
 			try {
 				int subImage = this.subImage;
-				this.OpenZip();
+				this.OpenArchive();
 				this.subImage = subImage;
 			} catch(Exception ex) {
-				Console.WriteLine (ex.Message);
+				BooruApp.BooruApplication.Log.Log (BooruLog.Category.Image, ex, "Caught exception opening zip for sub image");
 				this.SelectBaseImage ();
 				return;
 			}
 
 			try {
-				var entry = this.zipEntries[this.subImage];
+				var entry = this.archive.GetEntry(this.subImage);
 				using (var stream = entry.Open()) {
 					if (this.cachedAnimation != null)
 						this.cachedAnimation.Dispose ();
@@ -145,7 +133,7 @@ namespace Booru
 					this.SubImageName = entry.Name;
 				}
 			} catch(Exception ex) {
-				Console.WriteLine (ex.Message);
+				BooruApp.BooruApplication.Log.Log (BooruLog.Category.Image, ex, "Caught exception finding zip entry for sub image");
 				this.cachedAnimation = Resources.LoadResourcePixbufAnimation (Resources.ID_PIXBUFS_NOPREVIEW);
 			}
 		}
@@ -199,7 +187,7 @@ namespace Booru
 
 				return true;
 			} catch (Exception ex) {
-				System.Console.Out.WriteLine ("Could not load thumbnail " + thumbnailPath + ": " + ex.Message);
+				BooruApp.BooruApplication.Log.Log (BooruLog.Category.Image, ex, "Caught exception loading thumbnail "+thumbnailPath);
 				return false;
 			}
 		}
@@ -273,8 +261,12 @@ namespace Booru
 
 		private Gdk.PixbufAnimation CacheAnimation()
 		{
-			if (this.zipFile == null && this.cachedAnimation == null && this.Details.type == BooruImageType.Comix) {
-				this.OpenZip ();
+			if (this.archive == null && this.cachedAnimation == null && this.Details.type == BooruImageType.Comix) {
+				try {
+					this.OpenArchive ();
+				} catch (Exception ex) {
+					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Image, ex, "Caught exception opening zip "+this.Details.Path+" to cache");
+				}
 			}
 
 			if (this.cachedAnimation == null)

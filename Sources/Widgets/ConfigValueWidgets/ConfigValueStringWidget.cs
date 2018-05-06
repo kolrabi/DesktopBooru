@@ -14,7 +14,7 @@ namespace Booru {
 		{
 			BooruApp.BooruApplication.EventCenter.DatabaseLoadSucceeded += () => { 
 				// fill widget with data from database config when database has been loaded
-				this.Text = BooruApp.BooruApplication.Database.Config.GetString (key);
+				this.Text = BooruApp.BooruApplication.Database.Config.GetString (key) ?? "";
 			};
 
 			this.FocusOutEvent += (o, args) => { 

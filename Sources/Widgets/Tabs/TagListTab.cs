@@ -122,7 +122,6 @@ namespace Booru {
 
 			do {
 				TagDetails unfilteredDetails = (TagDetails)this.allTagsStore.GetValue (iter, 5);
-				Console.WriteLine(filteredDetails.ID.ToString() + " - " + unfilteredDetails.ID);
 				if (unfilteredDetails.ID == filteredDetails.ID) {
 					return true;
 				}
@@ -167,15 +166,16 @@ namespace Booru {
 			this.loadThread = new Thread (new ThreadStart (() => {
 				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, BooruLog.Severity.Info, "Getting tags list...");
 				var tags = BooruApp.BooruApplication.Database.GetUsedTagList ();
-				this.allTagsStore.Clear();
 				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, BooruLog.Severity.Info, "Got information about "+tags.Count+" tags.");
-				foreach (var tag in tags) {
+
+				this.allTagsStore.Clear();
+
+				foreach (var tag in tags) 
 					this.addedTags.Enqueue(tag);
-				}
+
 				this.isFinished = true;
-				Gtk.Application.Invoke((o,a)=>{
-					this.Sensitive = true;
-				});
+
+				BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=> this.Sensitive = true);
 			}));
 			this.loadThread.Name = "Tag List Load";
 			this.loadThread.Start ();

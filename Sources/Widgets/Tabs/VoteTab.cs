@@ -2,7 +2,6 @@
 using Gtk;
 using Cairo;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace Booru {
@@ -141,7 +140,7 @@ namespace Booru {
 		}
 
 		// create a task for loading the next image
-		private Task LoadNextImage(ImageVoteWidget widget)
+		System.Threading.Tasks.Task LoadNextImage(ImageVoteWidget widget)
 		{
 			this.BeginLoading (widget);
 
@@ -155,7 +154,7 @@ namespace Booru {
 				System.Threading.SpinWait.SpinUntil(() => !widget.IsFading);
 
 				// update image in gui thread
-				Application.Invoke((s,e) => { 
+				BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=> { 
 					widget.Image = image; 
 					image.Release();
 					this.FinishLoading ();

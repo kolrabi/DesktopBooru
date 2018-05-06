@@ -7,7 +7,7 @@ namespace Booru.Queries.Files
 	public class Add : DatabaseQuery
 	{
 		private Add () : base(
-			"INSERT INTO " + FilesTableName + " " +
+			"INSERT OR IGNORE INTO " + FilesTableName + " " +
 			"(" +
 			"  path, " +
 			"  md5sum " +

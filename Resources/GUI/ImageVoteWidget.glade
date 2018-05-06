@@ -2,74 +2,61 @@
 <!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <object class="GtkMenu" id="ImagePopupMenu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="DeleteButton1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Mark image for deletion</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_DeleteButton_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="BrowseToButton1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Go to image in file browser</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_BrowseToButton_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="OpenExternallyButton1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Open image in external viewer</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_OpenExternallyButton_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="ViewButton2">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">View image solo in image tab</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_ViewButton_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="ExportButton">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Export image</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_ExportButton_clicked" swapped="no"/>
+      </object>
+    </child>
+  </object>
   <object class="GtkBox" id="ImageVoteWidget">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="hexpand">True</property>
     <property name="vexpand">True</property>
     <property name="orientation">vertical</property>
-    <child>
-      <object class="GtkButtonBox" id="ButtonBox">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="spacing">8</property>
-        <property name="layout_style">start</property>
-        <child>
-          <object class="GtkButton" id="DeleteButton">
-            <property name="label" translatable="yes">Mark for Deletion</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="receives_default">True</property>
-            <property name="relief">half</property>
-            <signal name="clicked" handler="on_DeleteButton_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-            <property name="non_homogeneous">True</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="OpenExternallyButton">
-            <property name="label" translatable="yes">Open Externally</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="receives_default">True</property>
-            <property name="focus_on_click">False</property>
-            <property name="xalign">0.54000002145767212</property>
-            <signal name="clicked" handler="on_OpenExternallyButton_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-            <property name="secondary">True</property>
-            <property name="non_homogeneous">True</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="ViewButton">
-            <property name="label" translatable="yes">View</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="on_ViewButton_clicked" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">2</property>
-            <property name="non_homogeneous">True</property>
-          </packing>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
     <child>
       <object class="GtkBox" id="ImageViewBox">
         <property name="visible">True</property>
@@ -82,7 +69,7 @@
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">0</property>
       </packing>
     </child>
     <child>
@@ -109,7 +96,7 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">2</property>
+        <property name="position">1</property>
       </packing>
     </child>
   </object>

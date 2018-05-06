@@ -20,15 +20,11 @@ namespace Booru
 		{
 			Debug.Assert (!this.IsDisposed);
 			if (this.IsDisposed) {
-				Console.WriteLine ("tried to add reference to disposed object!");
+				Booru.BooruApp.BooruApplication.Log.Log (Booru.BooruLog.Category.Application, BooruLog.Severity.Warning, "Tried to add reference to disposed object!");
 				return;
 			}
 
-			int newRefCount = Interlocked.Increment(ref this.refCount);
-
-			var img = this as Image;
-			if (img != null)
-				Console.WriteLine ("{0} inc to {1}", img.Details.MD5, newRefCount); 
+			Interlocked.Increment(ref this.refCount);
 		}
 
 		public bool Release()
@@ -36,15 +32,11 @@ namespace Booru
 			Debug.Assert (!this.IsDisposed);
 
 			if (this.IsDisposed) {
-				Console.WriteLine ("tried to release a disposed object!");
+				Booru.BooruApp.BooruApplication.Log.Log (Booru.BooruLog.Category.Application, BooruLog.Severity.Warning, "Tried to release disposed object!");
 				return false;
 			}
 
 			int newRefCount = Interlocked.Decrement (ref this.refCount);
-
-			var img = this as Image;
-			if (img != null)
-				Console.WriteLine ("{0} dec to {1}", img.Details.MD5, newRefCount); 
 
 			if (newRefCount == 0) {
 				((IDisposable)this).Dispose ();

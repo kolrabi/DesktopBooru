@@ -41,12 +41,10 @@ namespace Booru {
 					return;
 
 				if (value != null) {
-					Console.WriteLine ("{0} setting image", value.Details.MD5);
 					value.AddRef ();
 				}
 
 				if (this.image != null) {
-					Console.WriteLine ("{0} unsetting image", value.Details.MD5);
 					this.image.Release ();
 				}
 				
@@ -57,9 +55,9 @@ namespace Booru {
 		}
 			
 		[UI] readonly Gtk.Box ImageViewBox;
-		[UI] readonly Gtk.ButtonBox ButtonBox;
 		[UI] readonly ImageViewWidget ImageWidget;
 		[UI] readonly TagsOverlay Overlay;
+		[UI] readonly Gtk.Menu ImagePopupMenu;
 
 		public static ImageVoteWidget Create ()
 		{
@@ -68,8 +66,6 @@ namespace Booru {
 
 		ImageVoteWidget (Gtk.Builder builder, IntPtr handle) : base (builder, handle)
 		{
-			BooruApp.BooruApplication.EventCenter.FullscreenToggled += OnFullscreenToggled;
-
 			this.ImageWidget = new ImageViewWidget ();
 			this.ImageViewBox.PackStart(this.ImageWidget, true, true, 0);
 
@@ -77,6 +73,14 @@ namespace Booru {
 			this.ImageWidget.Events |= Gdk.EventMask.ScrollMask;
 			this.ImageWidget.ScrollEvent += (o, args) => {
 				this.ImageWidget.AdvanceSubImage (args.Event.Direction == Gdk.ScrollDirection.Down);
+			};
+
+			// enable context menu
+			this.ImageWidget.Events |= Gdk.EventMask.ButtonReleaseMask | Gdk.EventMask.ButtonPressMask;
+			this.ImageWidget.ButtonReleaseEvent += (o, args) => {
+				if (args.Event.Button == 3) {
+					this.ImagePopupMenu.Popup();
+				}
 			};
 
 			this.Overlay = new TagsOverlay (this.ImageWidget);
@@ -107,10 +111,28 @@ namespace Booru {
 				this.image.ViewExternal (this.ImageWidget.Handle.ToInt32());
 		}
 
-		private void OnFullscreenToggled(bool isFullscreen)
+		private void on_BrowseToButton_clicked(object o, EventArgs args)
 		{
-			bool showStuff = !isFullscreen;
-			this.ButtonBox.Visible = showStuff;
+			if (this.image != null) {
+				var path = System.IO.Path.GetDirectoryName (this.image.Details.Path);
+				System.Diagnostics.Process.Start ("file://" + path);
+			}
+		}
+
+		private void on_ExportButton_clicked(object o, EventArgs args)
+		{
+			if (this.image != null) {
+				string folderPath;
+				if (SelectExportPathDialog.SelectPath (out folderPath)) {
+					string fromPath = this.image.Details.Path;
+					string toPath = folderPath + "/" + System.IO.Path.GetFileName (fromPath);
+					try {
+						System.IO.File.Copy (fromPath, toPath);
+					} catch(Exception ex) {
+						BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, ex, "Caught exception trying to copy " + fromPath + " to " + toPath);
+					}
+				}
+			}
 		}
 
 		public override void Destroy()

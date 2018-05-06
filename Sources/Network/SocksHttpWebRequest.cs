@@ -252,11 +252,10 @@ namespace Ditrans
 
 				try {
 					sslStream.AuthenticateAsClient (RequestUri.Host);
-					return sslStream;
 				} catch(Exception ex) {
-					Console.WriteLine (ex.Message);
-					return null;
+					Booru.BooruApp.BooruApplication.Log.Log (Booru.BooruLog.Category.Network, ex, "Caught exception trying to open secure connection");
 				}
+				return sslStream;
 			} else {
 				throw new InvalidDataException("unknown uri scheme "+RequestUri.Scheme);
 			}

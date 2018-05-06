@@ -50,6 +50,7 @@ namespace Booru
 			lock (this.entries) {
 				ImageEntry entry = new ImageEntry (path);
 				this.entries.Add (entry);
+				this.queueSema.Release ();
 				CallUpdate (entry);
 				return entry;
 			}
@@ -83,6 +84,7 @@ namespace Booru
 			}
 			this.entries.Clear ();
 			this.nextImportEntry = 0;
+			this.queueSema.Release ();
 		}
 
 		private string ReadableTimeSpan(DateTime date)
@@ -104,10 +106,14 @@ namespace Booru
 			}
 		}
 
+		private SemaphoreSlim queueSema = new SemaphoreSlim(0);
+
 		private void Import()
 		{
 			while (true) {
 				ImageEntry entry = null;
+				queueSema.Wait ();
+
 				lock (this.entries) {
 					if (this.entries.Count > this.nextImportEntry) {
 						entry = this.entries [this.nextImportEntry];
@@ -115,9 +121,7 @@ namespace Booru
 							this.nextImportEntry++;
 					}
 				}
-				if (entry == null) {
-					Thread.Sleep (1000);
-				} else {
+				if (entry != null) {
 					this.ImportEntry (entry);
 				}
 			}
@@ -215,8 +219,6 @@ namespace Booru
 				entry.Status = "No change";
 				CallUpdate (entry);
 			}
-			if (askedServer)
-				Thread.Sleep (100);
 		}
 
 		private string GetEntryMD5(ImageEntry entry) 

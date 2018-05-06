@@ -24,13 +24,11 @@ namespace Booru
 					return;
 
 				if (value != null) {
-					Console.WriteLine ("{0} setting image view widget", value.Details.MD5);
 					value.AddRef ();
 					value.SubImage = -1;
 				}
 
 				if (this.image != null) {
-					Console.WriteLine ("{0} unsetting image view widget", this.image.Details.MD5);
 					this.image.Release ();
 				}
 
@@ -54,15 +52,16 @@ namespace Booru
 		{
 			// frame update
 			GLib.Timeout.Add (10, () => {
-				if (hasFrameBeenQueued)
-					return true;
-				
 				bool wasFading = this.IsFading;
-				if (this.IsFading) {
-					this.fadeAlpha += (this.TargetAlpha - this.Alpha) * 0.5f;
-					if (Math.Abs(this.TargetAlpha - this.Alpha) < 0.01)
+				if (wasFading) {
+					float targetAlpha = this.TargetAlpha; 
+					this.fadeAlpha += (targetAlpha - this.fadeAlpha) * 0.5f;
+					if (Math.Abs(targetAlpha - this.fadeAlpha) < 0.01)
 						this.fadeAlpha = this.TargetAlpha;
 				}
+
+				if (hasFrameBeenQueued)
+					return true;
 
 				if (this.image != null && this.image.Anim != null && (!IsPaused || wasFading || !this.image.Anim.IsStaticImage)) {
 					this.UpdateImage(this.IsFading || !this.image.Anim.IsStaticImage);

@@ -11,6 +11,7 @@ namespace Booru
 		public const int THUMB_STORE_COLUMN_TOOLTIP = 0;
 		public const int THUMB_STORE_COLUMN_THUMBNAIL = 1;
 		public const int THUMB_STORE_COLUMN_IMAGE = 2;
+		public const int THUMB_STORE_COLUMN_INDEX = 3;
 
 		public delegate void OnLastImageAdded ();
 		public event OnLastImageAdded LastImageAdded;
@@ -19,7 +20,9 @@ namespace Booru
 		private uint loaderIdle = 0;
 		private bool isFinished = true;
 
-		public ThumbStore () : base(typeof (string), typeof (Gdk.Pixbuf), typeof(Image))
+		public bool IsFinished { get { return this.isFinished && this.addedImages.Count == 0; } }
+
+		public ThumbStore () : base(typeof (string), typeof (Gdk.Pixbuf), typeof(Image), typeof(string))
 		{
 		}
 
@@ -92,9 +95,13 @@ namespace Booru
 				throw new ArgumentNullException ();
 			
 			string tagsString = image.Details.Path + "\n" + string.Join (" ", image.Tags);
+			tagsString = tagsString.Replace ("&", "&amp;");
+
 			var iter = this.Append ();
-			this.SetValues(iter, tagsString, image.Thumbnail, image);
+			this.SetValues(iter, tagsString, image.Thumbnail, image, this.curIndex++);
 		}
+
+		private int curIndex = 1;
 
 		/// <summary>
 		/// Gets the image for a given row reference.

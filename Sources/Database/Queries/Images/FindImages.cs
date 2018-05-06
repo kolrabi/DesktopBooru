@@ -25,6 +25,7 @@ namespace Booru.Queries.Images
 			public List<string> PathGlobs = new List<string> ();
 			public List<string> OrderBy = new List<string>();
 			public int Limit = -1;
+			public int Skip = -1;
 		}
 
 		private string GetSQLConditionForTag(string tag, QueryParams queryParams)
@@ -143,6 +144,10 @@ namespace Booru.Queries.Images
 						queryParams.OrderBy.Add (" updated " + orderString);
 						return null;
 
+					case "path":
+						queryParams.OrderBy.Add (" files.path " + orderString);
+						return null;
+
 					case "random":
 						queryParams.OrderBy.Add(" RANDOM() ");
 						return null;
@@ -157,11 +162,16 @@ namespace Booru.Queries.Images
 					}
 				}
 
-
 				if (baseTag == "#limit") {
 					queryParams.Limit = argInt;
 					return null;
 				}
+
+				if (baseTag == "#skip") {
+					queryParams.Skip = argInt;
+					return null;
+				}
+
 			} else {
 				var tagIds = BooruApp.BooruApplication.Database.MatchTag (tag);
 				var tagIdString = string.Join (", ", tagIds);
@@ -185,9 +195,23 @@ namespace Booru.Queries.Images
 				"SELECT   DISTINCT files.md5sum, " +
 				"         files.path, " +
 				"         images.elo," +
-				"         images.votes, " +
+				"         images.wins + images.losses AS votes, " +
 				"         images.type AS type, " +
-				"         (SELECT COUNT(*) FROM image_tags WHERE md5sum = files.md5sum) AS tagCount, " +
+				"         (" +
+				"           SELECT COUNT(*) " +
+				"             FROM image_tags " +
+				"            WHERE md5sum = files.md5sum  " +
+				"              AND ( " +
+				"                    SELECT tag " +
+				"                      FROM tags " +
+				"                     WHERE id = image_tags.tagid" +
+				"                  ) NOT LIKE 'known_on_%'" +
+				"              AND ( " +
+				"                    SELECT tag " +
+				"                      FROM tags " +
+				"                     WHERE id = image_tags.tagid" +
+				"                  ) NOT LIKE 'not_on_%'" +
+				"         ) AS tagCount, " +
 				"         images.width AS width, "+
 				"         images.height AS height," +
 				"         images.wins AS wins," +
@@ -229,6 +253,9 @@ namespace Booru.Queries.Images
 
 			if (queryParams.Limit > 0)
 				builder.Append (" LIMIT " + queryParams.Limit);
+
+			if (queryParams.Skip > 0)
+				builder.Append (" OFFSET " + queryParams.Skip);
 
 			return builder.ToString ();
 		}

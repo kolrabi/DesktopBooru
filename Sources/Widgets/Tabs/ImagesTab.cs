@@ -49,12 +49,17 @@ namespace Booru {
 
 		void on_DeletedItem_activate(object sender, EventArgs args)
 		{
-			this.ExecuteSearch ("deleteme deleteme #sort:updated");
+			this.TagEntry.Text = "deleteme deleteme #sort:updated";
 		}
 
 		void on_Top100Item_activate(object sender, EventArgs args)
 		{
-			this.ExecuteSearch ("#limit:100 #sort:score");
+			this.TagEntry.Text = "#limit:100 #sort:score";
+		}
+
+		void on_TagMe100_activate(object sender, EventArgs args)
+		{
+			this.TagEntry.Text = "#limit:100 #sort:score #tags<6";
 		}
 
 		void on_TagEntry_activate(object sender, EventArgs args)

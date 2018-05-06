@@ -26,7 +26,7 @@ namespace Booru
 
 		public void BeginChangeDatabase()
 		{
-			Gtk.Application.Invoke ((o, a) => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
 				if (this.DatabaseLoadStarted != null)
 					this.DatabaseLoadStarted();
 			});
@@ -34,7 +34,7 @@ namespace Booru
 
 		public void FinishChangeDatabase(bool success)
 		{
-			Gtk.Application.Invoke ((o, a) => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
 				if (success) {
 					// fire event
 					if (this.DatabaseLoadSucceeded != null)

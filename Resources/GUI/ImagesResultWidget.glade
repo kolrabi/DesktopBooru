@@ -23,6 +23,26 @@
             <property name="spacing">4</property>
             <property name="layout_style">start</property>
             <child>
+              <object class="GtkButton" id="ExportButton">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Export All</property>
+                <property name="relief">none</property>
+                <property name="focus_on_click">False</property>
+                <property name="always_show_image">True</property>
+                <signal name="clicked" handler="on_ExportButton_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">4</property>
+                <property name="position">0</property>
+                <property name="secondary">True</property>
+                <property name="non_homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkButton" id="StopButton">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -35,7 +55,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">0</property>
+                <property name="position">1</property>
                 <property name="secondary">True</property>
                 <property name="non_homogeneous">True</property>
               </packing>
@@ -51,7 +71,7 @@
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
                 <property name="secondary">True</property>
                 <property name="non_homogeneous">True</property>
               </packing>
@@ -66,44 +86,23 @@
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="pack_type">end</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
                 <property name="secondary">True</property>
                 <property name="non_homogeneous">True</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label1">
+              <object class="GtkButton" id="RenameButton">
+                <property name="label" translatable="yes">Rename</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">results</property>
-                <property name="xalign">0</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_RenameButton_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
-                <property name="secondary">True</property>
-                <property name="non_homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="ExportButton">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Export All</property>
-                <property name="relief">none</property>
-                <property name="focus_on_click">False</property>
-                <property name="always_show_image">True</property>
-                <signal name="clicked" handler="on_ExportButton_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">4</property>
                 <property name="position">4</property>
-                <property name="secondary">True</property>
-                <property name="non_homogeneous">True</property>
               </packing>
             </child>
             <child>
@@ -214,6 +213,9 @@
                 <property name="position">10</property>
                 <property name="non_homogeneous">True</property>
               </packing>
+            </child>
+            <child>
+              <placeholder/>
             </child>
           </object>
           <packing>

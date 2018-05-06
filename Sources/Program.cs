@@ -41,7 +41,7 @@ namespace Booru
 			Gtk.StyleContext.AddProviderForScreen (Gdk.Screen.Default, provider, 600);
 
 			// install handler for glib exceptions
-			GLib.ExceptionManager.UnhandledException += (exargs) => PrintUnhandledException(exargs.ExceptionObject);
+			GLib.ExceptionManager.UnhandledException += (exargs) => PrintUnhandledException((Exception)exargs.ExceptionObject);
 
 			// initialize
 			this.Log = new BooruLog();
@@ -57,20 +57,9 @@ namespace Booru
 			this.MainWindow = MainWindow.Create ();
 		}
 
-		private static void PrintUnhandledException(object o)
+		private static void PrintUnhandledException(Exception ex)
 		{
-			var ex = o as Exception;
-			if (ex != null) {
-				Console.WriteLine ("Unhandled " + ex.GetType () + ": " + ex.Message);
-				Console.WriteLine (ex.StackTrace);
-				while(ex.InnerException != null) {
-					ex = ex.InnerException;
-					Console.WriteLine ("Inner exception: " + ex.GetType () + ": " + ex.Message);
-					Console.WriteLine (ex.StackTrace);
-				}
-			} else {
-				Console.WriteLine ("Unhandled exception: " + o);
-			}
+			BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, ex, "Caught unhandled exception");
 		}
 
 		private void Run()
@@ -100,6 +89,7 @@ namespace Booru
 					plugin.OnUnload ();
 				}
 				Booru.DatabaseQuery.DumpTimes ();
+				LoggingMutex.DumpAllStats ();
 				Gtk.Application.Quit ();
 				return true;
 			} else {

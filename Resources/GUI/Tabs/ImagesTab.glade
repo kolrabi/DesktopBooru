@@ -25,6 +25,15 @@
         <signal name="activate" handler="on_Top100Item_activate" swapped="no"/>
       </object>
     </child>
+    <child>
+      <object class="GtkMenuItem" id="TagMe100">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Top 100 needing tags</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_TagMe100_activate" swapped="no"/>
+      </object>
+    </child>
   </object>
   <object class="GtkBox" id="ImagesTab">
     <property name="visible">True</property>

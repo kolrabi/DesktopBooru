@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UI = Gtk.Builder.ObjectAttribute;
 
@@ -34,7 +35,7 @@ namespace Booru {
 		Gtk.Image ExportImage;
 		Gtk.Image AbortImage;
 
-		public Image ActiveImage { get { return this.imageView.Image; } }
+		public Image ActiveImage;
 
 		private readonly ThumbStore store;
 		private readonly ImageViewWidget imageView;
@@ -45,6 +46,8 @@ namespace Booru {
 		private ImageExporter exporter;
 
 		private int foundImageCount = 0;
+		private int markedImageCount = 0;
+		private uint idle = 0;
 
 		public static ImagesResultWidget Create (string searchString)
 		{
@@ -113,12 +116,16 @@ namespace Booru {
 			this.store = new ThumbStore ();
 			this.ImageThumbView.PixbufColumn = ThumbStore.THUMB_STORE_COLUMN_THUMBNAIL;
 			this.ImageThumbView.TooltipColumn = ThumbStore.THUMB_STORE_COLUMN_TOOLTIP;
+			this.ImageThumbView.TextColumn = ThumbStore.THUMB_STORE_COLUMN_INDEX;
+			this.ImageThumbView.ItemWidth = 64;
 
 			this.ImageThumbView.Model = this.store;
-			this.ImageThumbView.TooltipColumn = ThumbStore.THUMB_STORE_COLUMN_TOOLTIP;
 
 			this.ImageThumbView.Model.RowInserted += on_ImageThumbView_Model_RowInserted;
 			this.ImageThumbView.Model.RowChanged += on_ImageThumbView_Model_RowChanged;
+
+			this.ImageThumbView.Events |= Gdk.EventMask.KeyPressMask;
+			this.ImageThumbView.KeyPressEvent += on_ImageThumbView_KeyPress;
 
 			this.StopButton.Sensitive = true;
 			this.Spinner.Active = true;
@@ -130,13 +137,27 @@ namespace Booru {
 			//this.tagsBox = new TagsEntryWidget ();
 			//box.PackEnd (this.tagsBox, false, true, 0);
 			//this.tagsBox.Show ();
+
+			this.idle = GLib.Timeout.Add (100, () => {
+				if (this.imageView.Image != this.ActiveImage) {
+					// get newly selected image
+					this.imageView.Image = this.ActiveImage;
+
+					// this.tagsBox.SetTags (image.Tags);
+
+					// clear tags entry to not confuse user
+					this.TagsEntry.Text = "";
+					this.UpdateButtons ();
+				}
+				return true;
+			});
 		}
 
 		ImagesResultWidget Init(string searchString)
 		{
 			// finder for image search string
 			this.finder = new ImageFinder (searchString, this.store);
-			this.store.LastImageAdded+= () => Gtk.Application.Invoke((s,a)=>{
+			this.store.LastImageAdded += () => BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
 				this.Spinner.Active = false;
 				this.StopButton.Visible = false;
 				this.ExportButton.Sensitive = true;
@@ -158,6 +179,9 @@ namespace Booru {
 		public override void Destroy()
 		{
 			this.Abort ();
+
+			GLib.Timeout.Remove (this.idle);
+			this.idle = 0;
 
 			Gtk.TreeIter iter;
 			var model = this.ImageThumbView.Model as ThumbStore;
@@ -225,10 +249,9 @@ namespace Booru {
 			System.Diagnostics.Debug.Assert (BooruApp.BooruApplication.IsMainThread);
 
 			foundImageCount ++;
-
-			// update image count label 
-			this.ResultCountLabel.Text = this.foundImageCount.ToString();
+			this.UpdateCountLabel ();
 		}
+
 		/// <summary>
 		/// Called from the thumb store when a new thumbnail was added. 
 		/// </summary>
@@ -242,6 +265,33 @@ namespace Booru {
 			if (this.ActiveImage == null) {
 				this.SelectImagePath (args.Path);
 			}
+
+			if (this.store.IsFinished)
+				this.ReCount ();
+		}
+
+		void ReCount()
+		{
+			this.markedImageCount = 0;
+			this.foundImageCount = 0;
+
+			Gtk.TreeIter iter;
+			if (this.store.GetIterFirst (out iter)) {
+				do {
+					Image image = this.store.GetImage(iter);
+					if (image.Tags.Contains("deleteme"))
+						this.markedImageCount ++;
+					this.foundImageCount++;
+				} while (this.store.IterNext(ref iter));
+			}
+
+			this.UpdateCountLabel ();
+		}
+
+		void UpdateCountLabel()
+		{
+			// update image count label 
+			this.ResultCountLabel.Text = string.Format("{0} results, {1} unmarked", this.foundImageCount, this.foundImageCount - this.markedImageCount);
 		}
 
 		void SelectImageRowRef(Gtk.TreeRowReference rowRef)
@@ -263,27 +313,62 @@ namespace Booru {
 			this.UpdateButtons ();
 		}
 
+		private Gtk.TreePath lastSelectionBegin;
+		private Gtk.TreePath lastSelectionEnd;
+
 		void on_ImageThumbView_move_cursor(object obj, Gtk.MoveCursorArgs args)
 		{
 			if (this.ImageThumbView.SelectedItems.Length == 0)
 				return;
 			
-			Gtk.TreePath path = this.ImageThumbView.SelectedItems [0];
+			Gtk.TreePath selectionBegin = null;
+			Gtk.TreePath selectionEnd = null;
 
-			var image = this.store.GetImage (new Gtk.TreeRowReference(this.store, path));
-			var oldImage = this.ActiveImage;
+			foreach (var p in this.ImageThumbView.SelectedItems) {
+				if (selectionBegin == null || selectionBegin.Indices [0] > p.Indices [0]) {
+					selectionBegin = p;
+				}
+				if (selectionEnd == null || selectionEnd.Indices [0] < p.Indices [0]) {
+					selectionEnd = p;
+				}
+			}
 
-			if (image == oldImage)
-				return;
+			Gtk.TreePath newActiveImagePath = null;
 
-			// get newly selected image
-			this.imageView.Image = image;
+			if (this.lastSelectionBegin == null || this.lastSelectionBegin.Indices[0] != selectionBegin.Indices[0]) {
+				newActiveImagePath = selectionBegin;
+			}
+			if (this.lastSelectionEnd == null || this.lastSelectionEnd.Indices[0] != selectionEnd.Indices[0]) {
+				newActiveImagePath = selectionEnd;
+			}
 
-			// this.tagsBox.SetTags (image.Tags);
+			this.lastSelectionBegin = selectionBegin;
+			this.lastSelectionEnd = selectionEnd;
 
-			// clear tags entry to not confuse user
-			this.TagsEntry.Text = "";
-			this.UpdateButtons ();
+			this.ActiveImage = this.store.GetImage (new Gtk.TreeRowReference(this.store, newActiveImagePath));
+		}
+
+		void on_ImageThumbView_KeyPress(object obj, Gtk.KeyPressEventArgs args)
+		{
+			if (args.Event.Key == Gdk.Key.Delete) {
+				bool isShift = (args.Event.State & Gdk.ModifierType.ShiftMask) != 0;
+				bool anyMarked = this.IsAnySelectedMarkedForDelete ();
+
+				if (anyMarked) {
+					if (isShift) {
+						// unmark
+						this.on_MarkButton_clicked (obj, null);
+					} else {
+						// delete 
+						this.on_DeleteButton_clicked (obj, null);
+					}
+				} else {
+					if (!isShift) {
+						// mark
+						this.on_MarkButton_clicked(obj, null);
+					}
+				}
+			}
 		}
 		#endregion
 
@@ -373,31 +458,6 @@ namespace Booru {
 			}
 			return false;
 		}
-		/// <summary>
-		/// Check if hitting the delete button should mark selection for deletion instead of physically deleting.
-		/// </summary>
-		/// <returns><c>true</c> if tagging only; otherwise, <c>false</c>.</returns>
-//		bool IsDeleteTaggingOnly()
-//		{			
-//			// all selected images need to be tagged already to be deleted, so if any image
-//			// doesn't have the tag, delete button should only tag
-//			foreach (var path in this.ImageThumbView.SelectedItems) {
-//				var rowRef = new Gtk.TreeRowReference (this.store, path);
-//				var image = this.store.GetImage (rowRef);
-//
-//				//System.Diagnostics.Debug.Assert (image != null);
-//				if (image == null)
-//					continue;
-//
-//				System.Diagnostics.Debug.Assert (image.Tags != null);
-//				if (image.Tags == null)
-//					continue;
-//
-//				if (!image.Tags.Contains ("deleteme"))
-//					return true;
-//			}
-//			return false;
-//		}
 
 		void UpdateButtons()
 		{
@@ -418,6 +478,7 @@ namespace Booru {
 					this.MarkButton.TooltipText = "Mark Image(s) for Deletion";
 				}
 			}
+			this.ReCount ();
 		}
 
 		void on_DeleteButton_clicked(object sender, EventArgs args)
@@ -463,9 +524,7 @@ namespace Booru {
 								}
 							}
 						} catch (Exception ex) {
-							BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, BooruLog.Severity.Error, "Could not delete file " + source + ": " + ex.Message);
-							Console.WriteLine ("Could not delete file " + source + ": " + ex.Message);
-							Console.WriteLine (ex.StackTrace);
+							BooruApp.BooruApplication.Log.Log (BooruLog.Category.Files, ex, "Caught exception trying to delete file " + source);
 						}
 					}
 					BooruApp.BooruApplication.Database.RemoveImage (image.Details.MD5);
@@ -477,18 +536,31 @@ namespace Booru {
 
 		void on_MarkButton_clicked(object sender, EventArgs args)
 		{
+			List<Image> images = new List<Image> ();
+			foreach (var path in this.ImageThumbView.SelectedItems) {
+				var image = this.store.GetImage (new Gtk.TreeRowReference (this.store, path));
+				image.AddRef ();
+				images.Add (image);
+			}
+
 			bool anyMarked = this.IsAnySelectedMarkedForDelete ();
 			if (anyMarked) {
-				foreach (var path in this.ImageThumbView.SelectedItems) {
-					var image = this.store.GetImage (new Gtk.TreeRowReference (this.store, path));
-					image.RemoveTag ("deleteme");
-				}
+				new System.Threading.Thread (new System.Threading.ThreadStart (() => {
+					foreach (var image in images) {
+						image.RemoveTag ("deleteme");
+						image.Release ();
+					}
+				})).Start ();
 			} else {
-				foreach (var path in this.ImageThumbView.SelectedItems) {
-					var image = this.store.GetImage (new Gtk.TreeRowReference (this.store, path));
-					image.AddTag ("deleteme");
-				}
+				new System.Threading.Thread (new System.Threading.ThreadStart (() => {
+					foreach (var image in images) {
+						image.AddTag ("deleteme");
+						image.Release ();
+					}
+				})).Start ();
 			}
+
+			this.Advance (true);
 			this.UpdateButtons ();
 		}
 
@@ -564,46 +636,14 @@ namespace Booru {
 				return;
 			}
 
-			var dlg = new Gtk.FileChooserDialog (
-				"Select export directory", 
-				BooruApp.BooruApplication.MainWindow, 
-				Gtk.FileChooserAction.SelectFolder, 
-				"Export Here", Gtk.ResponseType.Ok, 
-				"Cancel", Gtk.ResponseType.Cancel
-			);
-			dlg.SetFilename (BooruApp.BooruApplication.Database.Config.GetString ("export.lastpath")+"/x");
-
-			if (dlg.Run () == (int)Gtk.ResponseType.Ok) {
-				string folderPath = dlg.Filename;
-
-				if (!System.IO.Directory.Exists(folderPath)) {
-					try {
-						System.IO.Directory.CreateDirectory(folderPath);
-					} catch(Exception ex) {
-						var messageDlg = new Gtk.MessageDialog (
-							BooruApp.BooruApplication.MainWindow, 
-							Gtk.DialogFlags.Modal, 
-							Gtk.MessageType.Error, 
-							Gtk.ButtonsType.Ok, 
-							"Invalid folder path!"
-						);
-						messageDlg.SecondaryText = ex.Message;
-						messageDlg.Run ();
-						messageDlg.Destroy ();
-						dlg.Destroy ();
-						return;
-					}
-				
-				}
-
-				BooruApp.BooruApplication.Database.Config.SetString ("export.lastpath", folderPath);
-
+			string folderPath;
+			if (SelectExportPathDialog.SelectPath(out folderPath)) {
 				int exportedCount = 0;
 				this.exporter = new ImageExporter (this.store, folderPath);
 				this.exporter.Exported += () =>  {
 					exportedCount++;
 
-					Gtk.Application.Invoke((o,a)=> {
+					BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
 						this.ExportProgress.Fraction = exportedCount / (float)this.foundImageCount;
 					});
 				};
@@ -612,7 +652,6 @@ namespace Booru {
 				};
 				this.exporter.Start ();
 			}
-			dlg.Destroy ();
 		}
 
 		void on_StopButton_clicked(object sender, EventArgs args)
@@ -628,6 +667,10 @@ namespace Booru {
 				else if (args.Event.Key == Gdk.Key.Page_Down)
 					this.Advance (true);
 			}
+		}
+
+		void on_RenameButton_clicked(object sender, EventArgs args)
+		{
 		}
 
 		void ToggleFullscreen(bool isFullscreen)

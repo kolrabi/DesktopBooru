@@ -22,11 +22,12 @@ namespace Booru
 		private readonly IDictionary<long, IList<long>> tagImplications = new Dictionary<long, IList<long>> ();
 		private double maxCount = .0;
 
+		public LoggingMutex Mutex { get; private set; }
+
 		public Database ()
 		{
 			this.IsLoaded = false;
 			this.Logger = new BooruLog.Logger (BooruLog.Category.Database);
-
 		}
 
 		#region Management
@@ -59,7 +60,7 @@ namespace Booru
 
 				this.OpenDatabase (connection);
 			} catch(Exception ex) {
-				Logger.Log(BooruLog.Severity.Error, "Could not create database: " + ex.Message);
+				Logger.Log(ex, "Caught exception while creating database");
 			}
 		}
 
@@ -69,13 +70,19 @@ namespace Booru
 			this.IsLoaded = false;
 
 			BooruApp.BooruApplication.EventCenter.BeginChangeDatabase ();
-
-			var loadThread = new Thread (new ThreadStart (() => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync(() => {
 				Logger.Log(BooruLog.Severity.Info, "Opening database "+BooruApp.BooruApplication.DBFile+"...");
 				this.Connection = connection;
+				this.Mutex = new LoggingMutex (this.Connection, "Database");
 
 				try {
 					this.Connection.Open ();
+
+					var pragmaCommand = this.Connection.CreateCommand();
+					pragmaCommand.CommandText = 
+						"PRAGMA cache_size = -8192; ";
+					pragmaCommand.ExecuteNonQuery();
+
 					this.TagEntryCompletionStore = new Gtk.ListStore(typeof(string), typeof(int));
 
 					this.Config = new Configuration (this);
@@ -100,6 +107,7 @@ namespace Booru
 					Logger.Log(BooruLog.Severity.Info, "Checking for obsolete path references...");
 					var allPaths = this.GetAllPaths();
 					var deletedPaths = new List<string>();
+					Logger.Log(BooruLog.Severity.Info, "File paths in database: "+allPaths.Count);
 					foreach(var path in allPaths)
 					{
 						if (!System.IO.File.Exists(path)) {
@@ -112,17 +120,24 @@ namespace Booru
 						foreach(var path in deletedPaths)
 							Logger.Log(BooruLog.Severity.Info, "    "+path);
 					}
+
+					var voteStats = Queries.Images.GetVoteStats.Execute();
+					Logger.Log(BooruLog.Severity.Info, "Voting statistics:");
+					int totalImageCount = 0;
+					foreach(var stat in voteStats) {
+						Logger.Log(BooruLog.Severity.Info, string.Format("{0} votes: {1} images", stat.Key, stat.Value));
+						totalImageCount += stat.Value;
+					}
+					Logger.Log(BooruLog.Severity.Info, string.Format("{0} images total", totalImageCount));
 				
 					Logger.Log(BooruLog.Severity.Info, "Database successfully opened.");
 					BooruApp.BooruApplication.EventCenter.FinishChangeDatabase (true);
 					this.IsLoaded = true;
 				} catch (System.Data.Common.DbException ex) {
-					Logger.Log(BooruLog.Severity.Error, "Could not open database: "+ex.Message);
+					Logger.Log(ex, "Caught exception while opening database");
 					BooruApp.BooruApplication.EventCenter.FinishChangeDatabase(false);
 				}
-			}));
-			loadThread.Name = "Database Load";
-			loadThread.Start ();
+			});
  		}
 
 		public void Dispose()
@@ -155,8 +170,7 @@ namespace Booru
 				transaction.Commit ();
 			} catch(Exception ex) {
 				transaction.Rollback ();
-				Console.WriteLine("Could not upgrade database: "+ex.Message);
-				Console.WriteLine(ex.StackTrace);
+				Logger.Log(ex, "Caught exception trying to upgrade database:");
 				throw ex;
 			}
 		}
@@ -171,11 +185,12 @@ namespace Booru
 
 		public bool AddImageIfNew(string path, string md5, string tags, BooruImageType fileType)
 		{
-			Logger.Log (BooruLog.Severity.Info, md5+": Adding/Updating: "+path);
+			Logger.Log (BooruLog.Severity.Info, md5 + ": Adding/Updating: " + path);
 
-			List<string> imageTagList = new List<string>(tags.Split (" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
+			List<string> imageTagList = new List<string> (tags.Split (" ".ToCharArray (), StringSplitOptions.RemoveEmptyEntries));
+			bool result = false;
 
-			lock (BooruApp.BooruApplication.Database.Connection) {
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 				var transaction = BooruApp.BooruApplication.Database.Connection.BeginTransaction ();
 				try {
 					Queries.Images.Add.Execute (md5, fileType);
@@ -185,88 +200,134 @@ namespace Booru
 						this.AddImageTag (md5, tag); 
 					}
 					transaction.Commit ();
-					return true;
+					result = true;
 				} catch (Exception ex) {
 					transaction.Rollback ();
-					Logger.Log (BooruLog.Severity.Error, md5 + ": DB Update threw exception: " + ex.Message);
-					Logger.Log (BooruLog.Severity.Error, ex.StackTrace);
-					return false;
+					Logger.Log (ex, "Caught exception while updating image "+md5);
 				}
-			}
+			});
+			return result;
 		}
 
 		public void SetImageType(string md5, BooruImageType type)
 		{
 			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
-				Queries.Images.SetType.Execute (md5, type);
-				Queries.Images.UpdateUpdated.Execute (md5);
+				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+					Queries.Images.SetType.Execute (md5, type);
+					Queries.Images.UpdateUpdated.Execute (md5);
+				});
 			});
 		}
 
 		public void SetImageSize(string md5, Point2D size)
 		{
 			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
-				Queries.Images.SetSize.Execute (md5, size);
-				Queries.Images.UpdateUpdated.Execute (md5);
+				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+					Queries.Images.SetSize.Execute (md5, size);
+					Queries.Images.UpdateUpdated.Execute (md5);
+				});
 			});
 		}
 
 		public void AddImagePath(string md5, string path)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => Queries.Files.Add.Execute (md5, path));
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => 
+			{
+				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+					Queries.Files.Add.Execute (md5, path);
+				});
+			});
 		}
 
 		public void RemoveImagePath(string path)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => Queries.Files.Remove.Execute (path));
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+						Queries.Files.Remove.Execute (path);
+				});
+			});
 		}
 
 		public void RemoveImage(string md5) 
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => Queries.Images.Remove.Execute (md5));
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => 
+			{
+				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+					Queries.Images.Remove.Execute (md5);
+				});
+			});
 		}
 
 		public List<string> GetAllPaths ()
 		{
-			return Queries.Files.GetAll.Execute ();
+			List<string> result = null;
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				result = Queries.Files.GetAll.Execute ();
+			});
+			return result;
 		}
 			
-		public DatabaseCursor<ImageDetails> QueryRandomImagesForVoting(BooruImageType type, bool asc)
+		public DatabaseCursor<ImageDetails> QueryRandomImagesForVoting(BooruImageType type)
 		{
-			return Queries.Images.NextVoteImages.Execute (type, asc);
+			DatabaseCursor<ImageDetails> result = null;
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				result = Queries.Images.NextVoteImages.Execute (type);
+			});
+			return result;
 		}
 
 		public DatabaseCursor<ImageDetails> QueryImagesWithTags(string tagString)
 		{
-			return Queries.Images.FindImages.Execute (tagString);
+			DatabaseCursor<ImageDetails> result = null;
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				result = Queries.Images.FindImages.Execute (tagString);
+			});
+			return result;
 		}
 
 		public List<string> GetImageTags(string md5)
 		{
-			return Queries.ImageTags.Get.Execute (md5);
+			List<string> result = null;
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				result = Queries.ImageTags.Get.Execute (md5);
+			});
+			return result;
 		}
 
 		public List<string> GetImagePaths(string md5)
 		{
-			return Queries.Files.GetForImage.Execute (md5);
+			List<string> result = null;
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				result = Queries.Files.GetForImage.Execute (md5);
+			});
+			return result;
 		}
 
 		public ImageDetails GetImageDetails(string md5)
 		{
-			using (var reader = Queries.Images.Get.Execute (md5)) {
-				if (reader.Read ()) {
-					ImageDetails details = new ImageDetails ();
-					details.InitFromReader (reader);
-					return details;
-				}
-			}
+			ImageDetails result = null;
 
-			return null;
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				using (var reader = Queries.Images.Get.Execute (md5)) {
+					if (reader.Read ()) {
+						ImageDetails details = new ImageDetails ();
+						details.InitFromReader (reader);
+						result = details;
+					}
+				}
+			});
+
+			return result;
 		}
 
 		public string GetPathMD5(string path)
 		{
-			byte[] md5blob = Queries.Files.GetMD5.Execute (path);
+			byte[] md5blob = null;
+
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+				md5blob = Queries.Files.GetMD5.Execute (path);
+			});
+
 			if (md5blob == null)
 				return null;
 
@@ -275,15 +336,12 @@ namespace Booru
 
 		public void AddImageElo(string md5, float offset)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => Queries.Images.UpdateElo.Execute (md5, offset));
-		}
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
+					Queries.Images.UpdateElo.Execute (md5, offset);
+				});
+			});
 
-		[Obsolete]
-		public void RefreshImage(ImageDetails details)
-		{
-			using (var reader = Queries.Images.Get.Execute (details.MD5)) {
-				details.InitFromReader (reader);
-			}
 		}
 		#endregion
 
@@ -336,7 +394,7 @@ namespace Booru
 			
 				this.TagEntryCompletionStore.AppendValues (tag, tagData.Count);
 			} catch(Exception ex) {
-				Logger.Log(BooruLog.Severity.Error, "Could not create tag: " + ex.Message);
+				Logger.Log (ex, "Caught exception while trying to create tag "+tag);
 			}
 			return this.GetTagId (tag);
 		}
@@ -536,24 +594,23 @@ namespace Booru
 		
 			lock(this.tagIds)
 			{
-				System.Threading.Tasks.Parallel.ForEach (this.tagIds, (kv) => {
-					if (!this.usedTagList.ContainsKey(kv.Value))
-						return;
+				foreach (var kv in this.tagIds) {
+					lock (this.usedTagList) {
+						if (!this.usedTagList.ContainsKey (kv.Value))
+							continue;
+					}
 					
 					if (kv.Key.StartsWith (tag)) {
 						lock (similar) {
 							similar.Add (new SimilarTag (kv.Key, kv.Value, 1));
 						}
-						return;
+						continue;
 					}
 
 					if (Math.Abs (kv.Key.Length - tag.Length) >= levenThresh)
-						return;
+						continue;
 
 					double similarity = StringHelper.CompareStrings(tag, kv.Key);
-					//if (similarity <= 0.0)
-						//similarity = 1;
-
 					try {
 						int ldistance = tag.LevenShteinDistance (kv.Key);
 						if (ldistance < levenThresh) {
@@ -562,16 +619,11 @@ namespace Booru
 							double countWeight = 1 + similarity  + count / this.maxCount;
 							weightedDistance = weightedDistance / (countWeight);
 							distTags [ldistance].Add (new SimilarTag (kv.Key, kv.Value, 1 + weightedDistance));
-							if (kv.Key == "solo" || kv.Key == "blush")
-							Console.WriteLine(kv.Key + " <-> " + tag + ": " + weightedDistance + " " + count);
 						}
-					}catch(Exception ex)
-					{
-						Console.WriteLine(ex.Message);
-						Console.WriteLine(ex.StackTrace);
+					} catch(Exception ex)	{
+						BooruApp.BooruApplication.Log.Log (BooruLog.Category.Database, ex, "Caught exception while trying to find similar tags to "+tag);
 					}
-
-				});
+				}
 			}
 
 			for (int i=1; i<levenThresh; i++) {

@@ -53,7 +53,7 @@ namespace GelbooruPlugin
 				if (!this.ParseData (App.Network.DownloadText(url, cookies), tags))
 					return false;
 			} catch (Exception ex) {
-				App.Log.Log(Booru.BooruLog.Category.Network, Booru.BooruLog.Severity.Error, "Exception caught while asking gelbooru: " + ex.Message + " " + ex.InnerException == null ? "no inner exception" : ex.InnerException.Message);
+				App.Log.Log(Booru.BooruLog.Category.Plugins, ex, "Exception caught while asking gelbooru");
 				return false;
 			}
 
@@ -97,8 +97,8 @@ namespace GelbooruPlugin
 					return false;
 				}
 			} catch(Exception ex) {
-				App.Log.Log(Booru.BooruLog.Category.Network, Booru.BooruLog.Severity.Error, "Could not parse booru data: " + ex.Message);
-				App.Log.Log(Booru.BooruLog.Category.Network, Booru.BooruLog.Severity.Error, "Data: " + tagData);
+				App.Log.Log(Booru.BooruLog.Category.Plugins, ex, "Exception caught while parsing booru data");
+				App.Log.Log(Booru.BooruLog.Category.Plugins, Booru.BooruLog.Severity.Error, "Data was:" + tagData);
 				return false;
 			}
 		}

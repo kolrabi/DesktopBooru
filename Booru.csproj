@@ -159,6 +159,11 @@
     <Compile Include="Sources\Database\Queries\Files\GetMD5.cs" />
     <Compile Include="Sources\Database\Queries\Files\GetPaths.cs" />
     <Compile Include="Sources\Util\RefCountedDisposable.cs" />
+    <Compile Include="Sources\Database\Queries\Images\GetVoteStats.cs" />
+    <Compile Include="Sources\Util\LoggingMutex.cs" />
+    <Compile Include="Sources\Util\FileArchive.cs" />
+    <Compile Include="Sources\Util\ZipArchive.cs" />
+    <Compile Include="Sources\Windows\SelectExportPathDialog.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\SQL\schema.sql">

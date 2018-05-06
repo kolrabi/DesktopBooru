@@ -8,45 +8,46 @@ namespace Booru
 {
 	public class RandomImageLoader
 	{
-		private ConcurrentQueue<Task<Image>> taskQueue = new ConcurrentQueue<Task<Image>>();
-		private ImageReader[] readers = new ImageReader[2];
-		private BooruImageType type = BooruImageType.Image;
-		private int idx = 0;
+		ConcurrentQueue<Task<Image>> taskQueue = new ConcurrentQueue<Task<Image>>();
+		ImageReader reader = new ImageReader(BooruImageType.Image);
+		BooruImageType type = BooruImageType.Image;
 	
 		public RandomImageLoader ()
 		{
 			BooruApp.BooruApplication.EventCenter.DatabaseLoadStarted += OnDatabaseLoadSucceeded;
 		}
 
-		private void OnDatabaseLoadSucceeded()
+		void OnDatabaseLoadSucceeded()
 		{
 			this.SetFilter (this.type);
 		}
-
-		private Random rnd = new Random();
-
-		private Task<Image> LoadImage()
+			
+		Task<Image> LoadImage()
 		{
-			var loadingTask = new Task<Image> (() => {
-				ImageDetails data = null;
-				while (data == null) {
-					lock(this.readers) {
-						data = this.readers[rnd.Next()%2].GetNextImage();
-						//this.idx = 1-this.idx;
-					}
-				}
-				return Image.GetImage(data);
-			});
+			var loadingTask = new Task<Image> (GetNextImageProc);
 			loadingTask.Start ();
 			return loadingTask;
+		}
+
+		Image GetNextImageProc()
+		{
+			ImageDetails data = null;
+			while (data == null) {
+				lock(this.reader) {
+					data = this.reader.GetNextImage();
+				}
+			}
+			return Image.GetImage(data);
 		}
 
 		public async Task<Image> NextImage()
 		{
 			Task<Image> task;
 			lock (this.taskQueue) {
+				// queue next image to be loaded
 				taskQueue.Enqueue (LoadImage ());
 
+				// and take one out
 				taskQueue.TryDequeue (out task);	
 			}
 			return await task;
@@ -55,24 +56,20 @@ namespace Booru
 		public void SetFilter(BooruImageType type)
 		{
 			lock (this.taskQueue) {
-				while (!taskQueue.IsEmpty) {
+				// clear out queue
+				while (!this.taskQueue.IsEmpty) {
 					Task<Image> task;
-					taskQueue.TryDequeue (out task);	
+					this.taskQueue.TryDequeue (out task);
 				}
 
-				lock (this.readers) {
-					for (int i=0; i<2; i++)
-					{
-						if (this.readers [i] != null)
-							this.readers [i].Close ();
+				// replace reader with reader for new type
+				this.reader.Close ();
+				this.reader = new ImageReader (type);
 
-						this.readers[i] = new ImageReader (type, i == 0);
-					}
-				}
-
+				// replace old queue with new one, add two tasks
 				var queue = new ConcurrentQueue<Task<Image>>();
-				for (int i = 0; i < 2; i++)
-					queue.Enqueue (LoadImage ());
+				queue.Enqueue (LoadImage ());
+				queue.Enqueue (LoadImage ());
 				this.taskQueue = queue;
 			}
 		}

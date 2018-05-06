@@ -9,6 +9,7 @@ namespace Booru
 	public class DatabaseQuery
 	{
 		protected readonly DbCommand command;
+		protected readonly LoggingMutex commandMutex;
 
 		protected static string TagsTableName = "tags";
 		protected static string ImagesTableName = "images";
@@ -18,11 +19,14 @@ namespace Booru
 		protected static string ImplicationsTableName = "tag_implications";
 
 		protected static IDictionary<Type, List<long>> queryTimes = new Dictionary<Type, List<long>>();
+		protected static LoggingMutex queryTimesMutex = new LoggingMutex (queryTimes, "Query Times");
 
 		public DatabaseQuery(string sql)
 		{
 			this.command = BooruApp.BooruApplication.Database.Connection.CreateCommand ();
 			this.command.CommandText = sql;
+
+			this.commandMutex = new LoggingMutex (this.command, "Query "+this.GetType().Name);
 		}
 
 		protected void Prepare()
@@ -55,35 +59,26 @@ namespace Booru
 			try {
 				ret = func ();
 			} catch(Exception ex) {
-				Console.WriteLine ("Exception caught executing query of type " + this.GetType ().FullName);
-				Console.WriteLine ();
-
-				Console.WriteLine (ex.GetType().Name);
-				Console.WriteLine (ex.Message);
-
-				Console.WriteLine ();
-				Console.WriteLine ("Command SQL:");
-				Console.WriteLine (this.command.CommandText);
-				Console.WriteLine ();
-
+				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, ex, "Exception caught executing query of type " + this.GetType ().FullName);
+				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, BooruLog.Severity.Error, "SQL command was:");
+				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, BooruLog.Severity.Error, this.command.CommandText);
 				throw ex;
 			}
 
 			var elapsed = stopWatch.ElapsedMilliseconds;
-
-			lock (queryTimes) {
+			queryTimesMutex.ExecuteCriticalSection (() => {
 				if (!queryTimes.ContainsKey (this.GetType ()))
 					queryTimes.Add (this.GetType (), new List<long> ());
 
 				queryTimes [this.GetType ()].Add (elapsed);
-			}
+			});
 
 			return ret;
 		}
 
 		public static void DumpTimes()
 		{
-			lock (queryTimes) {
+			queryTimesMutex.ExecuteCriticalSection (() => {
 				try {
 					string log = "";
 					foreach (var kv in queryTimes) {
@@ -96,38 +91,41 @@ namespace Booru
 						long med = kv.Value [kv.Value.Count / 2];
 						long tot = kv.Value.Sum ();
 
-						log += string.Format("{0,-50}: min: {1,5} max: {2,5} avg: {3,5} med: {4,5} num: {5,5} tot: {6,10}\n", kv.Key.FullName, min, max,avg, med, num, tot);
+						log += string.Format ("{0,-50}: min: {1,5} max: {2,5} avg: {3,5} med: {4,5} num: {5,5} tot: {6,10}\n", kv.Key.FullName, min, max, avg, med, num, tot);
 					}
-					System.IO.File.WriteAllText("queries.log", log);
+					System.IO.File.WriteAllText ("queries.log", log);
 				} catch (Exception ex) {
-					Console.WriteLine ("Could not log query statistics: " + ex.Message);
-					Console.WriteLine (ex.StackTrace);
+					BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, ex, "Caught exception logging query statistics");
 				}
-			}
+			});
 		}
 
 	    public object ExecuteScalar(params object[] paramValues)
 		{
-			lock (this.command) {
+			object result = null;
+			this.commandMutex.ExecuteCriticalSection(()=>{
 				this.SetParameterValues (paramValues);
-				return ExecuteTimed(() => this.command.ExecuteScalar ());
-			}
+				result = ExecuteTimed(() => this.command.ExecuteScalar ());
+			});
+			return result;
 		}
 
 		public DbDataReader ExecuteReader(params object[] paramValues)
 		{
-			lock (this.command) {
+			DbDataReader result = null;
+			this.commandMutex.ExecuteCriticalSection(()=>{
 				this.SetParameterValues (paramValues);
-				return ExecuteTimed (() => this.command.ExecuteReader ());
-			}
+				result = ExecuteTimed (() => this.command.ExecuteReader ());
+			});
+			return result;
 		}
 
 		public void ExecuteNonQuery(params object[] paramValues)
 		{
-			lock (this.command) {
+			this.commandMutex.ExecuteCriticalSection(()=>{
 				this.SetParameterValues (paramValues);
 				ExecuteTimed(() => this.command.ExecuteNonQuery ());
-			}
+			});
 		}
 
 		protected DbTransaction BeginTransaction()

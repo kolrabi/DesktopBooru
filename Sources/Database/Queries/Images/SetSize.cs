@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data.Common;
 using System.Data;
-using System.Threading.Tasks;
 
 namespace Booru.Queries.Images
 {

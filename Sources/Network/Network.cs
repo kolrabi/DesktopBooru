@@ -79,7 +79,7 @@ namespace Booru
 				}
 			}
 
-			string dataString = System.Text.Encoding.ASCII.GetString (data);
+			//string dataString = System.Text.Encoding.ASCII.GetString (data);
 			return data;
 		}
 

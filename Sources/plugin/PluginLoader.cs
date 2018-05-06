@@ -25,9 +25,7 @@ namespace Booru
 					Assembly fileAsm = Assembly.LoadFile(file);
 					this.LoadPluginsFromAssembly(fileAsm);
 				} catch(Exception ex) {
-					Booru.BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Warning, "Caught exception while loading plugins from " + file);
-					Booru.BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Warning, ex.Message);
-					Booru.BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Warning, ex.StackTrace);
+					Booru.BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, ex, "Caught exception while loading plugins from " + file);
 				}
 			}
 		}

@@ -11,6 +11,7 @@ namespace Booru
 		private readonly Thread thread;
 
 		public int ResultCount { get; private set; }
+		public bool IsRunning { get { return this.thread == null ? false : this.thread.IsAlive; } }
 
 		public ImageFinder(string searchString, ThumbStore model)
 		{
