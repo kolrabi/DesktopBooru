@@ -26,7 +26,7 @@ namespace Booru
 
 		public void BeginChangeDatabase()
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
+			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("DatabaseLoadStarted", ()=>{
 				if (this.DatabaseLoadStarted != null)
 					this.DatabaseLoadStarted();
 			});
@@ -34,7 +34,7 @@ namespace Booru
 
 		public void FinishChangeDatabase(bool success)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
+			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("FinishChangeDatabase", ()=>{
 				if (success) {
 					// fire event
 					if (this.DatabaseLoadSucceeded != null)

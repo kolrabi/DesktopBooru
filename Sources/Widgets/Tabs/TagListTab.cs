@@ -175,7 +175,7 @@ namespace Booru {
 
 				this.isFinished = true;
 
-				BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=> this.Sensitive = true);
+				BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("Tags list loaded", ()=> this.Sensitive = true);
 			}));
 			this.loadThread.Name = "Tag List Load";
 			this.loadThread.Start ();

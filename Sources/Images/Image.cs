@@ -19,6 +19,8 @@ namespace Booru
 		public double TotalTagScore { get; private set; }
 		public double AvgTagScore { get; private set; }
 
+		public bool NeedsOverlayRedrawn = true;
+
 		FileArchive archive = null;
 		private int subImage = -1;
 		public int SubImage { get { return subImage; } set { subImage = value; SelectSubImage (); } }
@@ -76,22 +78,10 @@ namespace Booru
 			if (this.archive != null)
 				return;
 			
-			var file = File.OpenRead (this.Details.Path);
-			byte[] magic = new byte[16];
-			file.Read (magic, 0, 16);
-			file.Seek (0, SeekOrigin.Begin);
-
 			this.maxImage = -1;
 			this.subImage = -1;
 
-			if (magic[0] == 0x50 && magic[1] == 0x4b && magic[2] == 0x03 && magic[3] == 0x04) {
-				// zip
-				this.archive = new ZipArchive(file);
-			} else if (magic[0] == 0x52 && magic[1] == 0x61 && magic[2] == 0x72 && magic[3] == 0x21) {
-				// rar
-				// TODO: this.OpenRar(file);
-			}
-
+			this.archive = FileArchive.Open (this.Details.Path);
 			if (this.archive != null) {
 				this.maxImage = archive.GetEntryCount () - 1;
 			}
@@ -308,6 +298,8 @@ namespace Booru
 
 		public void AddTag(string tag) 
 		{
+			this.NeedsOverlayRedrawn = true;
+
 			if (tag.StartsWith ("-")) {
 				BooruApp.BooruApplication.Log.Log(BooruLog.Category.Image, BooruLog.Severity.Info, this.Details.MD5+": Remove tag "+tag.Substring(1));
 				this.RemoveTag (tag.Substring (1));
@@ -333,6 +325,8 @@ namespace Booru
 
 		public void RemoveTag(string tag)
 		{
+			this.NeedsOverlayRedrawn = true;
+
 			BooruApp.BooruApplication.Database.RemoveImageTag (this.Details.MD5, tag);
 			if (this.Tags.Contains (tag))
 				this.Tags.Remove (tag);
@@ -340,6 +334,8 @@ namespace Booru
 
 		public void ReloadTags() 
 		{
+			this.NeedsOverlayRedrawn = true;
+
 			this.Tags = BooruApp.BooruApplication.Database.GetImageTags (this.Details.MD5);
 
 			// calculate score

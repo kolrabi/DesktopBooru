@@ -57,6 +57,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="Mono.Posix" />
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Windows" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -162,8 +163,10 @@
     <Compile Include="Sources\Database\Queries\Images\GetVoteStats.cs" />
     <Compile Include="Sources\Util\LoggingMutex.cs" />
     <Compile Include="Sources\Util\FileArchive.cs" />
-    <Compile Include="Sources\Util\ZipArchive.cs" />
     <Compile Include="Sources\Windows\SelectExportPathDialog.cs" />
+    <Compile Include="Sources\Database\Queries\Tags\MatchType.cs" />
+    <Compile Include="Sources\Util\Native.cs" />
+    <Compile Include="Sources\Widgets\PlayerControlWidget.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\SQL\schema.sql">
@@ -209,6 +212,7 @@
     <EmbeddedResource Include="Resources\GUI\viewexternal.png" />
     <EmbeddedResource Include="Resources\GUI\abort.png" />
     <EmbeddedResource Include="Resources\GUI\export.png" />
+    <EmbeddedResource Include="Resources\GUI\PlayerControlWidget.glade" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -237,5 +241,11 @@
     <Folder Include="Sources\Database\Entities\" />
     <Folder Include="Sources\Threads\" />
     <Folder Include="Sources\plugin\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="SharpCompress\SharpCompress.csproj">
+      <Project>{D13291C1-8267-4653-AA7A-A6F6BAE7F2AE}</Project>
+      <Name>SharpCompress</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

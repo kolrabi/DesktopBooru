@@ -7,17 +7,12 @@ namespace Booru
 	public sealed class TagsOverlay
 	{
 		static readonly Color COLOR_IMAGE_INFO = new Color(1, 1, 1);
-		static readonly Color COLOR_SCORE_BAR_BG_NEG = new Color(.3, 0, 0);
-		static readonly Color COLOR_SCORE_BAR_BG_POS = new Color(0, .3, 0);
+		static readonly Color COLOR_SCORE_BAR_BG_NEG = new Color(.3, 0, 0, .3);
+		static readonly Color COLOR_SCORE_BAR_BG_POS = new Color(0, .3, 0, .3);
 		static readonly Color COLOR_SCORE_BAR = new Color(1, 1, 1);
-		static readonly Color COLOR_SCORE_BAR_NEG = new Color(1, 0, 0);
-		static readonly Color COLOR_SCORE_BAR_POS = new Color(0, 1, 0);
+		static readonly Color COLOR_SCORE_BAR_NEG = new Color(1, 0, .5);
+		static readonly Color COLOR_SCORE_BAR_POS = new Color(0, 1, .5);
 		static readonly Color COLOR_BLACK = new Color(0, 0, 0);
-
-		static Color GetFadeColor(Color color, double alpha)
-		{
-			return new Color(color.R * alpha, color.G * alpha, color.B * alpha, color.A * alpha);
-		}
 
 		bool active = false;
 		public bool IsActive {
@@ -80,10 +75,10 @@ namespace Booru
 				this.OffsetX = newOffsetX;					
 			}
 
-			public void Draw(Cairo.Context cr, double alpha)
+			public void Draw(Cairo.Context cr)
 			{
 				foreach (var block in this.tagBlocks) {
-					block.Draw (cr, alpha);
+					block.Draw (cr);
 				}
 			}
 		}
@@ -125,7 +120,7 @@ namespace Booru
 				this.Height = cr.FontExtents.Height;
 			}
 
-			public void Draw(Cairo.Context cr, double alpha)
+			public void Draw(Cairo.Context cr)
 			{
 				double x = this.Position.X;
 				double y = this.Position.Y;
@@ -135,7 +130,7 @@ namespace Booru
 					x -= this.Width;
 				}
 
-				cr.DrawStringAt (x, y, this.Text, GetFadeColor(COLOR_BLACK, alpha), GetFadeColor(this.Color, alpha));
+				cr.DrawStringAt (x, y, this.Text, COLOR_BLACK, this.Color);
 			}
 		}
 
@@ -178,12 +173,12 @@ namespace Booru
 			this.tagBlockSiteColumn.Move (this.canvasSize.X - 8);
 		}
 
-		void DrawTagBlocks(Cairo.Context cr, double alpha)
+		void DrawTagBlocks(Cairo.Context cr)
 		{
 			cr.SelectTagOverlayFont ();
-			this.tagBlockSiteColumn.Draw (cr, alpha);
+			this.tagBlockSiteColumn.Draw (cr);
 			foreach (var column in this.tagBlockColumns)
-				column.Draw (cr, alpha);
+				column.Draw (cr);
 		}
 
 		bool UpdateFade(ImageViewWidget imageViewWidget)
@@ -204,7 +199,7 @@ namespace Booru
 			cr.Rectangle (scoreBarPos, scoreBarSize.X/2, scoreBarSize.Y);
 			cr.Fill ();
 
-			cr.SetSourceColor (COLOR_SCORE_BAR_BG_POS);
+			cr.SetSourceColor(COLOR_SCORE_BAR_BG_POS);
 			cr.Rectangle (new Rectangle (scoreBarCenter.X, scoreBarPos.Y, scoreBarSize.X/2, scoreBarSize.Y));
 			cr.Fill ();
 
@@ -238,7 +233,8 @@ namespace Booru
 
 		}
 
-		Cairo.PointD canvasSize;
+		Cairo.PointD canvasSize, lastCanvasSize;
+		Cairo.ImageSurface overlaySurface;
 
 		string infoString = "";
 
@@ -260,12 +256,22 @@ namespace Booru
 			);
 		}
 
-		void DrawInfoString(Cairo.Context cr, Image image, double alpha)
+		void DrawInfoString(Cairo.Context cr, Image image)
 		{
 			cr.SelectTagOverlayFont ();
-			cr.DrawStringAt (8, 8 + cr.FontExtents.Height, this.infoString, GetFadeColor(COLOR_BLACK, alpha), GetFadeColor(COLOR_IMAGE_INFO, alpha));
+			cr.DrawStringAt (8, 8 + cr.FontExtents.Height, this.infoString, COLOR_BLACK, COLOR_IMAGE_INFO);
 		}
-			
+
+		void RedrawOverlay(Cairo.Context cr, Image image)
+		{
+			this.UpdateTagBlocks (cr, image, 120.0, 32.0);
+			this.UpdateInfoString (image);
+
+			this.DrawInfoString (cr, image);
+			this.DrawTagBlocks (cr);
+			this.DrawScoreBars (cr, image, this.OpponentImage);
+		}
+
 		void DrawOverlay(System.Object o, Gtk.DrawnArgs args)
 		{
 			var imageViewWidget = this.drawingArea as ImageViewWidget;
@@ -275,14 +281,32 @@ namespace Booru
 			this.canvasSize = new Cairo.PointD (this.drawingArea.Allocation.Width, this.drawingArea.Allocation.Height);
 
 			var image = imageViewWidget.Image;
-			if (image != this.lastImage) {
-				this.UpdateTagBlocks (args.Cr, image, 120.0, 32.0);
-				this.UpdateInfoString (image);
+			bool redrawOverlay = 
+				this.canvasSize.X != this.lastCanvasSize.X || 
+				this.canvasSize.Y != this.lastCanvasSize.Y || 
+				image != this.lastImage ||
+				image.NeedsOverlayRedrawn;
+			
+			if (redrawOverlay) {
+				var overlaySurface = new Cairo.ImageSurface (Cairo.Format.ARGB32, (int)this.canvasSize.X, (int)this.canvasSize.Y);
+				var overlayCr = new Cairo.Context (overlaySurface);
+
+				this.RedrawOverlay (overlayCr, image);
+
+				overlayCr.Dispose ();
+
+				if (this.overlaySurface != null) {
+					this.overlaySurface.Dispose ();
+				}
+				this.overlaySurface = overlaySurface;
+				image.NeedsOverlayRedrawn = false;
 			}
 
-			this.DrawInfoString (args.Cr, image, this.currentFadeOpacity);
-			this.DrawTagBlocks (args.Cr, this.currentFadeOpacity);
-			this.DrawScoreBars (args.Cr, image, this.OpponentImage);
+			args.Cr.SetSourceSurface (this.overlaySurface, 0, 0);
+			args.Cr.PaintWithAlpha (this.currentFadeOpacity);
+
+			this.lastCanvasSize = this.canvasSize;
+			this.lastImage = image;
 		}
 	}
 }

@@ -69,6 +69,9 @@ namespace Booru {
 			this.ImageWidget = new ImageViewWidget ();
 			this.ImageViewBox.PackStart(this.ImageWidget, true, true, 0);
 
+			this.ImageWidget.Controls = PlayerControlWidget.Create ();
+			this.ImageViewBox.PackEnd (this.ImageWidget.Controls, false, true, 0);
+
 			// enable mouse scrolling
 			this.ImageWidget.Events |= Gdk.EventMask.ScrollMask;
 			this.ImageWidget.ScrollEvent += (o, args) => {
@@ -107,8 +110,9 @@ namespace Booru {
 
 		private void on_OpenExternallyButton_clicked(object o, EventArgs args)
 		{
-			if (this.image != null)
-				this.image.ViewExternal (this.ImageWidget.Handle.ToInt32());
+			if (this.image != null) {
+				this.image.ViewExternal (Native.GetDrawableNativeId(this.ImageWidget.Window).ToInt32 ());
+			}
 		}
 
 		private void on_BrowseToButton_clicked(object o, EventArgs args)

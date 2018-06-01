@@ -6,10 +6,9 @@ using System.Linq;
 
 namespace Booru
 {
-	public class DatabaseQuery
+	public abstract class DatabaseQuery
 	{
 		protected readonly DbCommand command;
-		protected readonly LoggingMutex commandMutex;
 
 		protected static string TagsTableName = "tags";
 		protected static string ImagesTableName = "images";
@@ -25,8 +24,6 @@ namespace Booru
 		{
 			this.command = BooruApp.BooruApplication.Database.Connection.CreateCommand ();
 			this.command.CommandText = sql;
-
-			this.commandMutex = new LoggingMutex (this.command, "Query "+this.GetType().Name);
 		}
 
 		protected void Prepare()
@@ -52,6 +49,15 @@ namespace Booru
 
 		private T ExecuteTimed<T>(Func<T> func)
 		{
+			string paramString = "";
+			for (int i=0; i<this.command.Parameters.Count; i++) {
+				object value = this.command.Parameters [i].Value;
+				string valueString = value == null ? "null" : value.ToString ();
+
+				paramString += this.command.Parameters [i].ParameterName + "=" + valueString + " ";
+			}
+			BooruApp.BooruApplication.Log.Log(BooruLog.Category.Database, BooruLog.Severity.Debug, "Executing query " + this.GetType ().FullName + " with params: "+paramString);
+
 			var stopWatch = new System.Diagnostics.Stopwatch ();
 			stopWatch.Start ();
 
@@ -103,7 +109,7 @@ namespace Booru
 	    public object ExecuteScalar(params object[] paramValues)
 		{
 			object result = null;
-			this.commandMutex.ExecuteCriticalSection(()=>{
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection(()=>{
 				this.SetParameterValues (paramValues);
 				result = ExecuteTimed(() => this.command.ExecuteScalar ());
 			});
@@ -113,7 +119,7 @@ namespace Booru
 		public DbDataReader ExecuteReader(params object[] paramValues)
 		{
 			DbDataReader result = null;
-			this.commandMutex.ExecuteCriticalSection(()=>{
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection(()=>{
 				this.SetParameterValues (paramValues);
 				result = ExecuteTimed (() => this.command.ExecuteReader ());
 			});
@@ -122,7 +128,7 @@ namespace Booru
 
 		public void ExecuteNonQuery(params object[] paramValues)
 		{
-			this.commandMutex.ExecuteCriticalSection(()=>{
+			BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection(()=>{
 				this.SetParameterValues (paramValues);
 				ExecuteTimed(() => this.command.ExecuteNonQuery ());
 			});

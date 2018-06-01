@@ -70,7 +70,7 @@ namespace Booru
 			this.IsLoaded = false;
 
 			BooruApp.BooruApplication.EventCenter.BeginChangeDatabase ();
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync(() => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync("Open database "+BooruApp.BooruApplication.DBFile, () => {
 				Logger.Log(BooruLog.Severity.Info, "Opening database "+BooruApp.BooruApplication.DBFile+"...");
 				this.Connection = connection;
 				this.Mutex = new LoggingMutex (this.Connection, "Database");
@@ -211,7 +211,7 @@ namespace Booru
 
 		public void SetImageType(string md5, BooruImageType type)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Set image type", () => {
 				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 					Queries.Images.SetType.Execute (md5, type);
 					Queries.Images.UpdateUpdated.Execute (md5);
@@ -221,7 +221,7 @@ namespace Booru
 
 		public void SetImageSize(string md5, Point2D size)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Set image size", () => {
 				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 					Queries.Images.SetSize.Execute (md5, size);
 					Queries.Images.UpdateUpdated.Execute (md5);
@@ -231,7 +231,7 @@ namespace Booru
 
 		public void AddImagePath(string md5, string path)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => 
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Add image path", () => 
 			{
 				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 					Queries.Files.Add.Execute (md5, path);
@@ -241,7 +241,7 @@ namespace Booru
 
 		public void RemoveImagePath(string path)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Remove image path", () => {
 				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 						Queries.Files.Remove.Execute (path);
 				});
@@ -250,7 +250,7 @@ namespace Booru
 
 		public void RemoveImage(string md5) 
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => 
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Remove image", () => 
 			{
 				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 					Queries.Images.Remove.Execute (md5);
@@ -336,7 +336,7 @@ namespace Booru
 
 		public void AddImageElo(string md5, float offset)
 		{
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Add image elo", () => {
 				BooruApp.BooruApplication.Database.Mutex.ExecuteCriticalSection (() => {
 					Queries.Images.UpdateElo.Execute (md5, offset);
 				});
@@ -401,6 +401,11 @@ namespace Booru
 
 		public List<int> MatchTag(string tag) 
 		{
+			if (tag.StartsWith ("%")) {
+				var tagDetails = this.GetTag (tag.Substring(1));
+				if (tagDetails != null)
+					return Queries.Tags.MatchType.Execute (tagDetails.Type);
+			}
 			return Queries.Tags.Match.Execute (tag);
 		}
 
@@ -517,7 +522,7 @@ namespace Booru
 					this.usedTagList [tagId].UpdateScore (offset);
 			}
 				
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync(()=> {
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync("Update tags score", ()=> {
 				Queries.Tags.UpdateScore.Execute(tagIds, offset);
 			});
 		}
@@ -642,7 +647,7 @@ namespace Booru
 			lock(this.usedTagList)
 				this.usedTagList [tagId].UpdateType (type);
 
-			BooruApp.BooruApplication.TaskRunner.StartTaskAsync(() => Queries.Tags.SetType.Execute (tagId, type));
+			BooruApp.BooruApplication.TaskRunner.StartTaskAsync("Set tag type", () => Queries.Tags.SetType.Execute (tagId, type));
 		}
 
 		public bool ReplaceTag(string fromTag, List<string> toTags)

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ItemType>PackagingProject</ItemType>
+    <ProjectGuid>{93E45A1C-2884-4483-817D-F7D6A76AEF5C}</ProjectGuid>
+    <Packages>
+      <Packages>
+        <Package name="Linux Binaries">
+          <Builder targetFile="..\Booru.tar.gz" platform="Linux" configuration="Debug|x86" ctype="BinariesZipPackageBuilder">
+            <ChildEntries>
+              <SolutionItemReference path="..\Booru.csproj" />
+              <SolutionItemReference path="..\GelbooruPlugin\GelbooruPlugin.csproj" />
+              <SolutionItemReference path="..\DanbooruPlugin\DanbooruPlugin.csproj" />
+              <SolutionItemReference path="..\SharpCompress\SharpCompress.csproj" />
+              <SolutionItemReference path="..\TBIBPlugin\TBIBPlugin.csproj" />
+            </ChildEntries>
+            <RootEntry path="..\Booru.sln" id=":root:" />
+          </Builder>
+        </Package>
+        <Package name="Microsoft Windows Binaries">
+          <Builder targetFile="..\Booru.tar.gz" platform="Windows" configuration="Debug|x86" ctype="BinariesZipPackageBuilder">
+            <ChildEntries>
+              <SolutionItemReference path="..\Booru.csproj" />
+              <SolutionItemReference path="..\GelbooruPlugin\GelbooruPlugin.csproj" />
+              <SolutionItemReference path="..\DanbooruPlugin\DanbooruPlugin.csproj" />
+              <SolutionItemReference path="..\SharpCompress\SharpCompress.csproj" />
+              <SolutionItemReference path="..\TBIBPlugin\TBIBPlugin.csproj" />
+            </ChildEntries>
+            <RootEntry path="..\Booru.sln" id=":root:" />
+          </Builder>
+        </Package>
+      </Packages>
+    </Packages>
+  </PropertyGroup>
+</Project>

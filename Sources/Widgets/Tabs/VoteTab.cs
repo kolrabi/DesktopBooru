@@ -154,7 +154,7 @@ namespace Booru {
 				System.Threading.SpinWait.SpinUntil(() => !widget.IsFading);
 
 				// update image in gui thread
-				BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=> { 
+				BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("Change image", ()=> { 
 					widget.Image = image; 
 					image.Release();
 					this.FinishLoading ();

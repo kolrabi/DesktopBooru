@@ -88,6 +88,7 @@ namespace Booru
 					}
 				}
 			}
+			Console.Out.Flush ();
 		}
 
 		public void Log(Category category, Exception ex, string message)

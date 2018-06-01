@@ -171,7 +171,6 @@ namespace Booru.Queries.Images
 					queryParams.Skip = argInt;
 					return null;
 				}
-
 			} else {
 				var tagIds = BooruApp.BooruApplication.Database.MatchTag (tag);
 				var tagIdString = string.Join (", ", tagIds);

@@ -9,8 +9,20 @@ namespace Booru
 	{
 		public long QueueLength { get { return this.totalCount; } }
 
-		private readonly ConcurrentBag<Task> runningTasksMainThread = new ConcurrentBag<Task>();
-		private readonly ConcurrentBag<Task> runningTasksAsync = new ConcurrentBag<Task>();
+		private class NamedTask
+		{
+			public readonly Task RunnableTask;
+			public readonly string Name;
+
+			public NamedTask(Action runnableAction, string name)
+			{
+				this.RunnableTask = new Task(runnableAction);
+				this.Name = name;
+			}
+		}
+
+		private readonly ConcurrentBag<NamedTask> runningTasksMainThread = new ConcurrentBag<NamedTask>();
+		private readonly ConcurrentBag<NamedTask> runningTasksAsync = new ConcurrentBag<NamedTask>();
 
 		private uint mainThreadTaskIdle = 0;
 		private Thread[] asyncTaskExecuterThreads;
@@ -59,7 +71,7 @@ namespace Booru
 		}
 
 		// add task to be executed in the main thread next when there is time
-		public void StartTaskMainThread(Action a) 
+		public void StartTaskMainThread(string name, Action a) 
 		{
 			System.Diagnostics.Debug.Assert(a != null);
 			System.Diagnostics.Debug.Assert(!this.asyncTaskExecuterStopWanted);
@@ -69,17 +81,17 @@ namespace Booru
 				return;
 			}
 
-			this.runningTasksMainThread.Add (new Task(a));
+			this.runningTasksMainThread.Add (new NamedTask(a, name));
 			this.StartMainIdle ();
 			Interlocked.Increment (ref this.totalCount);
 		}
 
 		// add task to be executed in one of the worker threads
-		public void StartTaskAsync(Action a) 
+		public void StartTaskAsync(string name, Action a) 
 		{
 			System.Diagnostics.Debug.Assert(a != null);
 
-			this.runningTasksAsync.Add (new Task(a));
+			this.runningTasksAsync.Add (new NamedTask(a, name));
 			this.queueSema.Release ();
 			Interlocked.Increment (ref this.totalCount);
 		}
@@ -135,26 +147,26 @@ namespace Booru
 				this.asyncTaskExecuterThreads[i].Join();
 		}
 
-		bool ExecuteNextTask(ConcurrentBag<Task> queue)
+		bool ExecuteNextTask(ConcurrentBag<NamedTask> queue)
 		{
-			Task task;
+			NamedTask task;
 
 			if (queue.Count > 0 && queue.TryTake (out task)) {
-				System.Diagnostics.Debug.Assert (!task.IsCompleted);
+				System.Diagnostics.Debug.Assert (!task.RunnableTask.IsCompleted);
 
 				try {
 					System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 						
-					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Debug, "Running task "+task.Id);
+					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Debug, "Running task "+task.RunnableTask.Id+" '"+task.Name+"'");
 
 					stopwatch.Start();
-					task.RunSynchronously ();
+					task.RunnableTask.RunSynchronously ();
 					stopwatch.Stop();
 
-					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Debug, "Task "+task.Id+" took "+stopwatch.ElapsedMilliseconds+"ms");
+					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Debug, "Task "+task.RunnableTask.Id+" took "+stopwatch.ElapsedMilliseconds+"ms");
 
-					if (task.Exception != null)
-						throw task.Exception;
+					if (task.RunnableTask.Exception != null)
+						throw task.RunnableTask.Exception;
 				} catch(Exception ex) {
 					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Error, "Caught exception while running task: "+ex.Message);
 					BooruApp.BooruApplication.Log.Log (BooruLog.Category.Application, BooruLog.Severity.Error, ex.StackTrace);

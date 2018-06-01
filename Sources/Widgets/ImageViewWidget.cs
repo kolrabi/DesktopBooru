@@ -6,6 +6,8 @@ namespace Booru
 {
 	public sealed class ImageViewWidget : Gtk.DrawingArea
 	{
+		public PlayerControlWidget Controls;
+
 		public bool IsPaused = false;
 		public bool IsFading { get { return this.Alpha != this.TargetAlpha; } }
 
@@ -30,6 +32,13 @@ namespace Booru
 
 				if (this.image != null) {
 					this.image.Release ();
+				}
+
+				if (this.Controls != null && this.Controls.PlayerPocess != null) {
+					if (!this.Controls.PlayerPocess.HasExited)
+						this.Controls.PlayerPocess.Kill ();
+					this.Controls.PlayerPocess = null;
+					//this.Window.ThawUpdates ();
 				}
 
 				this.image = value;
@@ -73,8 +82,19 @@ namespace Booru
 				return true;
 			});
 
+			this.Events = this.Events | Gdk.EventMask.ButtonPressMask;
+
 			this.Show ();
 		}
+
+		protected override void OnRealized ()
+		{
+			base.OnRealized ();
+			this.Window.EnsureNative ();
+			this.windowId = Native.GetDrawableNativeId (this.Window).ToInt32();
+		}
+
+		int windowId = 0;
 
 		public override void Destroy()
 		{
@@ -90,8 +110,34 @@ namespace Booru
 			return true;
 		}
 
-		Gdk.Pixbuf unscaledPixBuf;
+		protected override bool OnButtonPressEvent (Gdk.EventButton evnt)
+		{
+			if (evnt.Button == 1) {
+				if (this.image.Details.type == BooruImageType.Video && windowId != 0 && this.Controls != null) {
+					if (this.Controls.PlayerPocess == null) {
+						var proc = new System.Diagnostics.Process ();
+						proc.StartInfo.RedirectStandardInput = true;
+						proc.StartInfo.RedirectStandardOutput = true;
+						proc.StartInfo.UseShellExecute = false;
+						proc.StartInfo.Arguments = string.Format ("-slave -loop 0 -vo gl -volume 0 -wid {1} {0}", "\"" + this.image.Details.Path + "\"", windowId);
+						proc.StartInfo.FileName = "mplayer";
+						proc.Start (); 
+						this.Controls.PlayerPocess = proc;
+					} else {
+						try {
+							this.Controls.PlayerPocess.Kill ();
+						} catch(Exception ex) {
+							BooruApp.BooruApplication.Log.Log (BooruLog.Category.Image, ex, "Caught exception killing mplayer");
+						}
+						this.Controls.PlayerPocess = null;
+						this.QueueDraw ();
+					}
+				}
+			}
+			return base.OnButtonPressEvent (evnt);
+		}
 
+		Gdk.Pixbuf unscaledPixBuf;
 
 		private void UpdateImage(bool forceUpdate)
 		{
@@ -156,6 +202,10 @@ namespace Booru
 		
 		protected override bool OnDrawn (Cairo.Context cr)
 		{
+			if (this.Controls != null && this.Controls.PlayerPocess != null) {
+				return true;
+			}
+
 			bool baseDrawnResult = base.OnDrawn (cr);
 
 			var scaledPixbuf = this.ScaledPixbuf;

@@ -85,6 +85,7 @@ namespace Booru {
 				this.Abort ();
 			};
 
+
 			// TODO: add custom tag input widget
 			/*
 			var tagbox = new TagBoxWidget ();
@@ -96,10 +97,16 @@ namespace Booru {
 			this.imageView = new ImageViewWidget ();
 			this.ImageViewBox.PackStart (this.imageView, true, true, 0);
 
+			this.imageView.Controls = PlayerControlWidget.Create ();
+			this.ImageViewBox.PackEnd (this.imageView.Controls, false, true, 0);
+
 			// enable mouse scrolling
 			this.imageView.Events |= Gdk.EventMask.ScrollMask;
 			this.imageView.ScrollEvent += (o, args) => {
-				this.Advance (args.Event.Direction == Gdk.ScrollDirection.Down);
+				if (args.Event.Direction == Gdk.ScrollDirection.Down)
+					this.Advance (true);
+				else if (args.Event.Direction == Gdk.ScrollDirection.Up)
+					this.Advance (false);
 			};
 
 			// add overlay for tag display
@@ -157,7 +164,7 @@ namespace Booru {
 		{
 			// finder for image search string
 			this.finder = new ImageFinder (searchString, this.store);
-			this.store.LastImageAdded += () => BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
+			this.store.LastImageAdded += () => BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("Last image added to ImagesResultWidget", ()=>{
 				this.Spinner.Active = false;
 				this.StopButton.Visible = false;
 				this.ExportButton.Sensitive = true;
@@ -224,6 +231,8 @@ namespace Booru {
 			Gtk.TreePath path = new Gtk.TreePath ();
 
 			if (this.ImageThumbView.SelectedItems.Length > 0) {
+				if (this.imageView.AdvanceSubImage (forward))
+					return;
 				if (forward) {
 					foreach (var selPath in this.ImageThumbView.SelectedItems) {
 						if (path.Depth == 0 || path.Compare (selPath) < 0)
@@ -235,8 +244,6 @@ namespace Booru {
 							path = selPath;
 					}
 				}
-				if (this.imageView.AdvanceSubImage (forward))
-					return;
 			}
 
 			path = this.GetNextPath (path, forward);
@@ -509,7 +516,7 @@ namespace Booru {
 			bool moveImages = dbConfig.GetBool ("deletemove.enable");
 			var targetPath = moveImages ? dbConfig.GetString("deletemove.path") : "";
 			foreach(var image in images) {
-				BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+				BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Delete marked images", () => {
 					var paths = BooruApp.BooruApplication.Database.GetImagePaths(image.Details.MD5);
 					foreach (string source in paths) {
 						try {
@@ -567,7 +574,7 @@ namespace Booru {
 		void on_OpenExternalButton_clicked(object sender, EventArgs args)
 		{
 			if (this.ActiveImage != null)
-				this.ActiveImage.ViewExternal (this.imageView.Window.Visual.OwnedHandle.ToInt32());
+				this.ActiveImage.ViewExternal (Native.GetDrawableNativeId(this.imageView.Window).ToInt32());
 		}
 
 		void on_ShowTagsButton_toggled(object sender, EventArgs args)
@@ -643,7 +650,7 @@ namespace Booru {
 				this.exporter.Exported += () =>  {
 					exportedCount++;
 
-					BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=>{
+					BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("Update export progress bar", ()=>{
 						this.ExportProgress.Fraction = exportedCount / (float)this.foundImageCount;
 					});
 				};

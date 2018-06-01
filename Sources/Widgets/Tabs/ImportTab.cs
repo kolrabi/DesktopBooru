@@ -122,7 +122,7 @@ namespace Booru {
 
 			if (dlg.Run() == (int)Gtk.ResponseType.Ok) {
 				BooruApp.BooruApplication.Database.SetConfig ("import.mru", dlg.CurrentFolder);
-				BooruApp.BooruApplication.TaskRunner.StartTaskAsync (() => {
+				BooruApp.BooruApplication.TaskRunner.StartTaskAsync ("Import add folders", () => {
 					foreach (var path in dlg.Filenames) {
 						this.AddFolder (path);
 					}
@@ -178,7 +178,7 @@ namespace Booru {
 			string entryPath = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(entry.path)) + "/" + System.IO.Path.GetFileName(entry.path);
 
 			//Gtk.Application.Invoke ((o,a) => {
-			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread(()=> {
+			BooruApp.BooruApplication.TaskRunner.StartTaskMainThread("Import update entry", ()=> {
 				lock (entries) {
 					if (entries.ContainsKey (entry)) {
 						var rowRef = entries[entry];

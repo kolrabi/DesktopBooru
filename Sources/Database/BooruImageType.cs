@@ -105,6 +105,13 @@ namespace Booru
 					callBooru = false;
 					return BooruImageType.Comix;
 				}
+
+				if (magic[0] == 0x37 && magic[1] == 0x7A && magic[2] == 0xBC && magic[3] == 0xAF && magic[4] == 0x27 && magic[5] == 0x1C) {
+					// 7z
+					callBooru = false;
+					return BooruImageType.Comix;
+				}
+
 				callBooru = false;
 				return BooruImageType.Unknown;
 			} catch (System.Threading.ThreadAbortException ex) {

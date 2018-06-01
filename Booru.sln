@@ -7,16 +7,28 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GelbooruPlugin", "GelbooruP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DanbooruPlugin", "DanbooruPlugin\DanbooruPlugin.csproj", "{C19B75E3-0B9A-4129-8D0E-09536816A61A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TBIBPlugin", "TBIBPlugin\TBIBPlugin.csproj", "{29C1CC02-BB3C-4330-99A1-3B7D0991B4D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpCompress", "SharpCompress\SharpCompress.csproj", "{D13291C1-8267-4653-AA7A-A6F6BAE7F2AE}"
+EndProject
+Project("{9344BDBB-3E7F-41FC-A0DD-8665D75EE146}") = "BooruPackage", "BooruPackage\BooruPackage.mdproj", "{93E45A1C-2884-4483-817D-F7D6A76AEF5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{29C1CC02-BB3C-4330-99A1-3B7D0991B4D4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{29C1CC02-BB3C-4330-99A1-3B7D0991B4D4}.Debug|x86.Build.0 = Debug|Any CPU
+		{29C1CC02-BB3C-4330-99A1-3B7D0991B4D4}.Release|x86.ActiveCfg = Release|Any CPU
+		{29C1CC02-BB3C-4330-99A1-3B7D0991B4D4}.Release|x86.Build.0 = Release|Any CPU
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Debug|x86.ActiveCfg = Debug|x86
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Debug|x86.Build.0 = Debug|x86
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Release|x86.ActiveCfg = Release|x86
 		{5811AC87-9D6D-43C3-ABA5-EA37FEA967E5}.Release|x86.Build.0 = Release|x86
+		{93E45A1C-2884-4483-817D-F7D6A76AEF5C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{93E45A1C-2884-4483-817D-F7D6A76AEF5C}.Release|x86.ActiveCfg = Release|Any CPU
 		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Debug|x86.Build.0 = Debug|Any CPU
 		{AAC01DBC-AA09-41C0-8F66-FF34034BEC8E}.Release|x86.ActiveCfg = Release|Any CPU
@@ -25,6 +37,10 @@ Global
 		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Debug|x86.Build.0 = Debug|Any CPU
 		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Release|x86.ActiveCfg = Release|Any CPU
 		{C19B75E3-0B9A-4129-8D0E-09536816A61A}.Release|x86.Build.0 = Release|Any CPU
+		{D13291C1-8267-4653-AA7A-A6F6BAE7F2AE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D13291C1-8267-4653-AA7A-A6F6BAE7F2AE}.Debug|x86.Build.0 = Debug|Any CPU
+		{D13291C1-8267-4653-AA7A-A6F6BAE7F2AE}.Release|x86.ActiveCfg = Release|Any CPU
+		{D13291C1-8267-4653-AA7A-A6F6BAE7F2AE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Booru.csproj
